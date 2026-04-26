@@ -1,21 +1,29 @@
 <script>
-    /* ==========================================
+/* ==========================================
        ZONE 1: SETTINGS & INITIAL DATA
-       (ตั้งค่า API และตัวแปรหลัก)
     ========================================== */
     const apiUrl = 'https://script.google.com/macros/s/AKfycbwNLW9rMRdeq82LaLCrP5PCyxj0Sz-GFcnD1hs4ZG6AviyV7NpH6mWNIBLGN7NVCEvf/exec';
     let allStudents = [], allTeachers = [], currentPage = 'student';
 
     async function loadData() {
+        const area = document.getElementById('displayArea');
+        if (area) area.innerHTML = '<div class="text-center p-5">⏳ กำลังโหลดข้อมูล...</div>';
+        
         try {
+            console.log("Fetching from:", apiUrl); // เช็กใน Console ว่า URL วิ่งไหม
             const res = await fetch(`${apiUrl}?t=${new Date().getTime()}`, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
+            
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
+            
+            console.log("Data Loaded:", allStudents.length, "students");
             renderDisplay();
-        } catch (e) { document.getElementById('displayArea').innerHTML = '<div class="text-center p-5">โหลดข้อมูลไม่สำเร็จ</div>'; }
+        } catch (e) { 
+            console.error("Load Error:", e);
+            if (area) area.innerHTML = '<div class="alert alert-danger m-3">⚠️ โหลดไม่สำเร็จ: ' + e.message + '</div>'; 
+        }
     }
-
     /* ==========================================
        ZONE 2: MAIN DISPLAY CONTROLLER
        (ตัวควบคุมการแสดงผลหลัก)
