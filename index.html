@@ -18,42 +18,43 @@
     </div>
 
     <script>
+        // URL จากการ Deploy ครั้งที่ 9
         const apiUrl = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsl7CXi5cG9FZhvp03kr6JHdv8iAZhZ_6-7o/exec';
 
-      async function loadData() {
-        const studentListDiv = document.getElementById('studentList');
-        try {
-            // เพิ่ม redirect: 'follow' เพื่อให้ดึงข้อมูลผ่านกำแพงความปลอดภัยของ Google ได้
-            const response = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
-            const fullData = await response.json();
-            
-            // ดึงข้อมูลจากก้อน students
-            const students = fullData.students; 
-            
-            if (!students || students.length === 0) {
-                studentListDiv.innerHTML = '<p>ไม่พบข้อมูลนักเรียน</p>';
-                return;
-            }
+        async function loadData() {
+            const studentListDiv = document.getElementById('studentList');
+            try {
+                // ใช้ redirect: 'follow' เพื่อดึงข้อมูลจาก Google
+                const response = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
+                const fullData = await response.json();
+                
+                // ดึงข้อมูลจากก้อน students
+                const students = fullData.students; 
+                
+                if (!students || students.length === 0) {
+                    studentListDiv.innerHTML = '<p>ไม่พบข้อมูลนักเรียน</p>';
+                    return;
+                }
 
-            let html = '';
-            students.forEach(s => {
-                html += `
-                    <div class="student-card d-flex justify-content-between align-items-center">
-                        <div class="text-start">
-                            <h5 class="mb-0" style="font-weight: 600;">${s['ชื่อเล่น'] || 'ไม่ระบุชื่อ'}</h5>
-                            <small class="text-muted">รหัส: ${s['รหัสนักเรียน'] || '-'}</small>
-                        </div>
-                        <button class="btn btn-primary btn-sm" onclick="alert('เช็คชื่อสำเร็จ')">เช็คชื่อ</button>
-                    </div>`;
-            });
-            studentListDiv.innerHTML = html;
-        } catch (error) {
-            console.error('Error:', error);
-            studentListDiv.innerHTML = '<div class="alert alert-danger">❌ โหลดข้อมูลไม่สำเร็จ กรุณาเช็คการตั้งค่า Apps Script</div>';
-        }
-    }
+                let html = '';
+                students.forEach(s => {
+                    html += `
+                        <div class="student-card d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <h5 class="mb-0" style="font-weight: 600;">${s['ชื่อเล่น'] || 'ไม่ระบุชื่อ'}</h5>
+                                <small class="text-muted">รหัส: ${s['รหัสนักเรียน'] || '-'}</small>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="alert('เช็คชื่อสำเร็จ')">เช็คชื่อ</button>
+                        </div>`;
+                });
+                studentListDiv.innerHTML = html;
+            } catch (error) {
+                console.error('Error:', error);
+                studentListDiv.innerHTML = '<div class="alert alert-danger">❌ โหลดข้อมูลไม่สำเร็จ กรุณาเช็คการตั้งค่า Apps Script</div>';
             }
         }
+
+        // เรียกใช้งานฟังก์ชัน
         loadData();
     </script>
 </body>
