@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Support - Admin V 0.0.050</title>
+    <title>Music Support - Admin V 0.0.051</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -14,14 +14,12 @@
         .nav-link { border-radius: 25px !important; color: #666; font-weight: 600; font-size: 0.85rem; border: none; background: none; }
         .nav-link.active { background-color: #007bff !important; color: white !important; box-shadow: 0 4px 10px rgba(0,123,255,0.3); }
         
-        /* การ์ดนักเรียน/ครู */
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
         .data-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; min-height: 320px; }
         .photo-slot { width: 90px; height: 90px; background: #e9ecef; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
         .default-icon { width: 50px; height: 50px; fill: #adb5bd; }
 
-        /* ตารางเรียน */
         .schedule-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .day-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 10px; }
         .day-header { padding: 10px; font-weight: bold; text-align: center; color: white; }
@@ -37,7 +35,7 @@
 </head>
 <body>
 
-<div class="version-tag">V 0.0.050 (Full Restore)</div>
+<div class="version-tag">V 0.0.051 (Locked & Stable)</div>
 
 <div class="container-fluid">
     <h2 class="header-title">🎸 Music Admin</h2>
@@ -69,33 +67,24 @@
     function renderDisplay(data = null) {
         const area = document.getElementById('displayArea');
         const listData = data || (currentPage === 'student' ? allStudents : allTeachers);
-        
-        if (currentPage === 'schedule') {
-            renderSchedule();
-            return;
-        }
+        if (currentPage === 'schedule') { renderSchedule(); return; }
 
         let html = '<div class="main-grid">';
         listData.forEach(item => {
-            const v = Object.values(item);
-            const id = v[0];
+            const v = Object.values(item); const id = v[0];
             if (currentPage === 'student') {
-                const rawImg = v[18]; // ช่อง S
+                const rawImg = v[18]; 
                 const hasPhoto = rawImg && rawImg.toString().startsWith('data:image');
-                const photoContent = hasPhoto ? `<img src="${rawImg}" id="img-${id}">` : `<div id="img-box-${id}">${personIcon}</div>`;
                 html += `<div class="data-card">
                     <div class="fw-bold mb-1">${v[2] || 'ไม่มีชื่อ'}</div>
-                    <div class="photo-slot" id="slot-${id}">${photoContent}</div>
+                    <div class="photo-slot" id="slot-${id}">${hasPhoto ? `<img src="${rawImg}" id="img-${id}">` : `<div id="img-box-${id}">${personIcon}</div>`}</div>
                     <div class="small text-muted">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
                     <div class="mb-2">คงเหลือ: <span style="color:#28a745; font-weight:bold;">${v[16] || 0} ชม.</span></div>
                     <label class="upload-label" id="label-${id}">📷 อัปรูปใหม่<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
                     <div class="progress" id="progress-${id}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div></div>
                 </div>`;
             } else {
-                html += `<div class="data-card" style="min-height:120px; justify-content:center;">
-                    <div class="fw-bold">${v[2] || 'ไม่มีชื่อ'}</div>
-                    <div class="small text-muted">ID: ${id}</div>
-                </div>`;
+                html += `<div class="data-card" style="min-height:120px; justify-content:center;"><div class="fw-bold">${v[2] || 'ไม่มีชื่อ'}</div><div class="small text-muted">ID: ${id}</div></div>`;
             }
         });
         area.innerHTML = html + '</div>';
@@ -107,19 +96,11 @@
         days.forEach(day => {
             const filtered = allStudents.filter(s => (Object.values(s)[14] || "").toString().includes(day));
             filtered.sort((a, b) => (Object.values(a)[15] || "").toString().localeCompare((Object.values(b)[15] || "").toString()));
-            html += `<div class="day-card">
-                <div class="day-header day-${day}">${day}</div>
-                <div class="day-body">
-                    ${filtered.length > 0 ? filtered.map(s => {
-                        const v = Object.values(s);
-                        const teacher = allTeachers.find(t => Object.values(t)[0] == v[19]);
-                        return `<div class="class-item">
-                            <div class="class-time">${v[15] || '--:--'}</div>
-                            <div><strong>${v[2]}</strong><br><small class="text-muted">🎸 ${v[8]} - ครู${teacher ? Object.values(teacher)[2] : '?'}</small></div>
-                        </div>`;
-                    }).join('') : '<div class="p-3 text-center text-muted small">ไม่มีเรียน</div>'}
-                </div>
-            </div>`;
+            html += `<div class="day-card"><div class="day-header day-${day}">${day}</div><div class="day-body">
+                ${filtered.length > 0 ? filtered.map(s => {
+                    const v = Object.values(s); const teacher = allTeachers.find(t => Object.values(t)[0] == v[19]);
+                    return `<div class="class-item"><div class="class-time">${v[15] || '--:--'}</div><div><strong>${v[2]}</strong><br><small class="text-muted">🎸 ${v[8]} - ครู${teacher ? Object.values(teacher)[2] : '?'}</small></div></div>`;
+                }).join('') : '<div class="p-3 text-center text-muted small">ไม่มีเรียน</div>'}</div></div>`;
         });
         document.getElementById('displayArea').innerHTML = html + '</div>';
     }
@@ -141,28 +122,15 @@
                 try {
                     const res = await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 })});
                     const result = await res.json();
-                    if (result.status === 'success') {
-                        slot.innerHTML = `<img src="${base64}" id="img-${id}">`;
-                        Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1000, showConfirmButton: false });
-                    }
-                } catch (err) { Swal.fire('Error', 'ลองใหม่อีกครั้ง', 'error'); }
+                    if (result.status === 'success') { slot.innerHTML = `<img src="${base64}" id="img-${id}">`; Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1000, showConfirmButton: false }); }
+                } catch (err) { Swal.fire('Error', 'ลองใหม่', 'error'); }
                 finally { progress.style.display = 'none'; label.style.display = 'block'; }
             };
         };
     }
 
-    function switchPage(p) { 
-        currentPage = p; 
-        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-        document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('active');
-        document.getElementById('searchBox').style.display = (p === 'schedule') ? 'none' : 'block';
-        renderDisplay(); 
-    }
-    function handleSearch() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        const data = (currentPage === 'student' ? allStudents : allTeachers);
-        renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
-    }
+    function switchPage(p) { currentPage = p; document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active')); document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('active'); document.getElementById('searchBox').style.display = (p === 'schedule') ? 'none' : 'block'; renderDisplay(); }
+    function handleSearch() { const term = document.getElementById('searchInput').value.toLowerCase(); const data = (currentPage === 'student' ? allStudents : allTeachers); renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term))); }
     loadData();
 </script>
 </body>
