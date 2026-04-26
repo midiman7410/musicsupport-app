@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Fix Loading V 0.0.82</title>
+    <title>Music Admin - Fix Salary Logic V 0.0.83</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -12,27 +12,25 @@
         body { background: var(--bg-light); font-family: 'Sarabun', sans-serif; padding-bottom: 70px; }
         .v-badge { position: fixed; top: 10px; right: 10px; background: var(--main-orange); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.65rem; z-index: 9999; font-weight: bold; }
         .nav-pills { justify-content: center; background: #fff; border-radius: 50px; padding: 5px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; }
-        .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.85rem; border: none !important; padding: 8px 15px; min-width: 80px; }
+        .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.85rem; border: none !important; padding: 8px 15px; }
         .nav-link.active { background-color: var(--main-orange) !important; color: white !important; }
         .stat-card { background: white; border-radius: 15px; padding: 15px; text-align: center; border-bottom: 4px solid var(--main-orange); box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%; }
+        .salary-row { border-bottom: 1px solid #eee; padding: 12px 5px; }
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 10px; }
         .std-card { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #eee; }
         .std-photo { width: 60px; height: 60px; background: #eee; border-radius: 50%; margin: 0 auto 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .std-photo img { width: 100%; height: 100%; object-fit: cover; }
         .btn-up { background: #fff3e0; color: #e67e22; border: 1px solid #ffcc80; font-size: 0.7rem; padding: 4px; border-radius: 8px; width: 100%; margin-top: 5px; font-weight: bold; display: block; cursor: pointer; }
-        .teacher-box { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-left: 5px solid var(--teacher-blue); box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; }
-        .std-item-teacher { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px; margin-bottom: 8px; text-align: left; }
         .table-responsive { background: white; border-radius: 12px; border: 1px solid #dee2e6; margin: 0 10px; overflow-x: auto; }
         .table-timetable { min-width: 950px; margin-bottom: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
         .th-day { width: 100px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; text-align: center; vertical-align: middle !important; position: sticky; left: 0; z-index: 2; border: 1px solid #eee; }
         .th-time { background: var(--main-orange) !important; color: white !important; text-align: center; font-size: 0.85rem; padding: 10px !important; border: 1px solid #eee; }
-        .class-box { background: #fff; border: 1px solid #ffccaa; border-left: 4px solid var(--main-orange); border-radius: 8px; padding: 6px; margin-bottom: 5px; text-align: left; font-size: 0.75rem; line-height: 1.3; }
-        .txt-teacher { color: var(--teacher-blue); font-weight: 600; font-size: 0.7rem; }
+        .class-box { background: #fff; border: 1px solid #ffccaa; border-left: 4px solid var(--main-orange); border-radius: 8px; padding: 6px; margin-bottom: 5px; text-align: left; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
-<div class="v-badge">V 0.0.82</div>
+<div class="v-badge">V 0.0.83</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -48,7 +46,7 @@
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อนักเรียน..." onkeyup="handleSearch()" style="border-radius: 20px;">
     </div>
     
-    <div id="displayArea"><div class="text-center p-5">กำลังโหลดข้อมูล...</div></div>
+    <div id="displayArea"></div>
 </div>
 
 <script>
@@ -63,10 +61,7 @@
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
             renderDisplay();
-        } catch (e) { 
-            console.error(e);
-            document.getElementById('displayArea').innerHTML = '<div class="text-center p-5 text-danger">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้าจอ</div>'; 
-        }
+        } catch (e) { document.getElementById('displayArea').innerHTML = '<div class="text-center p-5">โหลดข้อมูลไม่สำเร็จ</div>'; }
     }
 
     async function checkAdminAuth() {
@@ -84,9 +79,7 @@
 
     function renderDisplay() {
         const area = document.getElementById('displayArea');
-        if (!area) return;
         area.innerHTML = '';
-        
         if (currentPage === 'overview') renderOverview(area);
         else if (currentPage === 'student') renderStudentList();
         else if (currentPage === 'teacher') renderTeacherList(area);
@@ -94,69 +87,69 @@
     }
 
     function renderOverview(container) {
-        const lowHoursCount = allStudents.filter(s => {
-            const v = Object.values(s)[16];
-            const hr = (v === "" || v === null || isNaN(v)) ? 0 : parseFloat(v);
-            return hr <= 2;
-        }).length;
-
+        const lowHr = allStudents.filter(s => (parseFloat(Object.values(s)[16]) || 0) <= 2).length;
         container.innerHTML = `
             <div class="px-3">
                 <div class="row g-3">
-                    <div class="col-6"><div class="stat-card"><div class="small text-muted">นักเรียน</div><div class="h2 fw-bold text-dark">${allStudents.length}</div></div></div>
-                    <div class="col-6"><div class="stat-card"><div class="small text-muted">คุณครู</div><div class="h2 fw-bold text-primary">${allTeachers.length}</div></div></div>
-                    <div class="col-12"><div class="stat-card" style="border-color: #dc3545;"><div class="small text-muted">ใกล้หมดคอร์ส (≤ 2 ชม.)</div><div class="h2 fw-bold text-danger">${lowHoursCount} คน</div></div></div>
+                    <div class="col-6"><div class="stat-card">นักเรียน<div class="h2 fw-bold">${allStudents.length}</div></div></div>
+                    <div class="col-6"><div class="stat-card">คุณครู<div class="h2 fw-bold text-primary">${allTeachers.length}</div></div></div>
+                    <div class="col-12"><div class="stat-card" style="border-color:#dc3545;">ใกล้หมดคอร์ส<div class="h2 fw-bold text-danger">${lowHr} คน</div></div></div>
                 </div>
-                <h6 class="fw-bold mt-4 mb-3">การจัดการ</h6>
-                <div class="list-group shadow-sm">
-                    <button class="list-group-item list-group-item-action py-3 text-primary fw-bold" onclick="showSalaryReport()">💰 รายงานสรุปเงินเดือนครู</button>
-                    <button class="list-group-item list-group-item-action py-3 text-muted" onclick="isAdmin=false; switchPage('student');">🔒 ล็อคหน้าแอดมิน</button>
+                <div class="mt-4 shadow-sm rounded bg-white p-3">
+                    <button class="btn btn-lg w-100 mb-2 fw-bold" style="background:#fff3e0; color:#e67e22;" onclick="showSalaryReport()">💰 สรุปยอดเงินเดือนครู</button>
+                    <button class="btn btn-sm w-100 text-muted" onclick="isAdmin=false; switchPage('student');">🔒 ล็อคหน้าแอดมิน</button>
                 </div>
             </div>`;
     }
 
     function showSalaryReport() {
-        let reportHtml = '<div style="text-align:left; font-size:0.9rem;">';
         let totalGrand = 0;
+        let html = '<div style="text-align:left; font-size:0.9rem;">';
+        
         allTeachers.forEach(t => {
-            const vt = Object.values(t);
-            const tId = vt[0], tName = vt[2], tRate = parseFloat(vt[3]) || 300;
-            const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
-            const totalPay = myStudents.length * tRate;
-            totalGrand += totalPay;
-            reportHtml += `<div class="salary-row d-flex justify-content-between py-2 border-bottom">
-                <div><b>ครู${tName}</b><br><small class="text-muted">ดูแลเด็ก ${myStudents.length} คน</small></div>
-                <div class="fw-bold text-success">${totalPay.toLocaleString()}.-</div>
+            const v = Object.values(t);
+            const tId = v[0], tName = v[2];
+            // แก้ไข: ถ้ายังไม่มีการเช็กชื่อจริง ให้ยอดเป็น 0
+            const pay = 0; 
+            html += `<div class="salary-row d-flex justify-content-between align-items-center">
+                <div><b>ครู${tName}</b><br><small class="text-muted">ยังไม่มีบันทึกการสอน</small></div>
+                <div class="fw-bold text-dark">${pay.toLocaleString()}.-</div>
             </div>`;
         });
-        reportHtml += `<div class="mt-3 p-2 bg-light rounded d-flex justify-content-between"><b>ยอดรวมทั้งหมด:</b><b class="text-primary">${totalGrand.toLocaleString()} บาท</b></div></div>`;
-        Swal.fire({ title: 'สรุปยอดเงินเดือนครู', html: reportHtml, width: '90%', confirmButtonText: 'ปิด', confirmButtonColor: '#ff6600' });
+
+        html += `<div class="mt-3 p-2 bg-light rounded d-flex justify-content-between"><b>รวมจ่ายทั้งหมด:</b><b class="text-primary">0 บาท</b></div></div>`;
+        
+        Swal.fire({
+            title: 'สรุปยอดเงินเดือน (ตามจริง)',
+            html: html,
+            width: '90%',
+            confirmButtonText: 'ปิด',
+            confirmButtonColor: '#ff6600'
+        });
     }
 
     function renderStudentList(filteredData = null) {
-        const area = document.getElementById('displayArea');
-        const listData = filteredData || allStudents;
+        const list = filteredData || allStudents;
         let html = '<div class="main-grid">';
-        listData.forEach(item => {
-            const v = Object.values(item);
+        list.forEach(s => {
+            const v = Object.values(s);
             const photo = v[18] && v[18].toString().startsWith('data') ? `<img src="${v[18]}">` : '👤';
-            const hr = (v[16] === "" || v[16] === null || isNaN(v[16])) ? 0 : v[16];
             html += `<div class="std-card">
                 <div class="std-photo">${photo}</div>
-                <div class="fw-bold" style="font-size:0.85rem;">${v[2] || 'ไม่ระบุชื่อ'}</div>
-                <div class="small" style="color:var(--main-orange)">เหลือ ${hr} ชม.</div>
+                <div class="fw-bold" style="font-size:0.85rem;">${v[2]}</div>
+                <div class="small" style="color:var(--main-orange)">เหลือ ${v[16] || 0} ชม.</div>
                 <label class="btn-up">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${v[0]}')"></label>
             </div>`;
         });
-        area.innerHTML = html + '</div>';
+        document.getElementById('displayArea').innerHTML = html + '</div>';
     }
 
     function renderTeacherList(container) {
         let html = '<div class="px-3">';
         allTeachers.forEach(t => {
             const v = Object.values(t);
-            html += `<div class="teacher-box d-flex justify-content-between align-items-center" onclick="viewTeacherDashboard('${v[0]}', '${v[2]}')">
-                <div><h6 class="fw-bold mb-0">ครู${v[2]}</h6><small class="text-muted">คลิกเพื่อดูนักเรียน</small></div>
+            html += `<div class="teacher-box p-3 mb-2 bg-white rounded shadow-sm border-start border-primary border-4 d-flex justify-content-between align-items-center" onclick="viewTeacherDashboard('${v[0]}', '${v[2]}')">
+                <div class="fw-bold">ครู${v[2]}</div>
                 <span class="badge bg-primary rounded-pill">${allStudents.filter(s => Object.values(s)[19] == v[0]).length} คน</span>
             </div>`;
         });
@@ -165,34 +158,23 @@
 
     function viewTeacherDashboard(tId, tName) {
         const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
-        let html = `<div class="px-3">
-            <button class="btn btn-sm btn-link text-muted mb-2" onclick="switchPage('teacher')">← กลับ</button>
-            <h5 class="fw-bold">ครู${tName}</h5>
-            <div id="teacherStudentList">`;
-        
-        if (myStudents.length === 0) {
-            html += '<div class="text-center p-4 text-muted">ไม่มีนักเรียนในรายชื่อ</div>';
-        } else {
-            myStudents.forEach(s => {
-                const v = Object.values(s);
-                const hr = (v[16] === "" || v[16] === null || isNaN(v[16])) ? 0 : v[16];
-                html += `<div class="std-item-teacher">
-                    <div class="d-flex justify-content-between"><b>${v[2]}</b> <span class="fw-bold" style="color:var(--main-orange)">${hr} ชม.</span></div>
-                    <div class="small text-muted mb-2">${v[8] || ''} | ${v[14] || ''} ${v[15] || ''}น.</div>
-                    <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openCheckInModal('${v[0]}', '${v[2]}', ${hr})">เช็กชื่อ / บันทึกสอน</button>
-                </div>`;
-            });
-        }
-        html += `</div></div>`;
-        document.getElementById('displayArea').innerHTML = html;
+        let html = `<div class="px-3"><button class="btn btn-sm btn-link text-muted mb-2" onclick="switchPage('teacher')">← กลับ</button><h5 class="fw-bold">ครู${tName}</h5>`;
+        myStudents.forEach(s => {
+            const v = Object.values(s);
+            html += `<div class="p-3 bg-white border rounded mb-2">
+                <div class="d-flex justify-content-between"><b>${v[2]}</b> <span class="fw-bold text-orange">${v[16]} ชม.</span></div>
+                <button class="btn btn-warning w-100 btn-sm mt-2 fw-bold" onclick="openCheckInModal('${v[0]}', '${v[2]}')">เช็กชื่อ / บันทึกสอน</button>
+            </div>`;
+        });
+        document.getElementById('displayArea').innerHTML = html + '</div>';
         document.getElementById('searchBox').style.display = 'none';
     }
 
     function switchPage(p) {
         currentPage = p;
         document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-        const navId = `nav${p.charAt(0).toUpperCase() + p.slice(1)}`;
-        if(document.getElementById(navId)) document.getElementById(navId).classList.add('active');
+        const nav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
+        if(nav) nav.classList.add('active');
         document.getElementById('searchBox').style.display = (p === 'student') ? 'block' : 'none';
         renderDisplay();
     }
@@ -202,7 +184,7 @@
         renderStudentList(allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
 
-    async function openCheckInModal(sId, sName, currentHr) {
+    async function openCheckInModal(sId, sName) {
         const { value: formValues } = await Swal.fire({
             title: `บันทึกการสอน: ${sName}`,
             html: '<input id="sw-l" class="swal2-input" placeholder="สอนถึงหน้าไหน..."><input id="sw-h" class="swal2-input" placeholder="การบ้าน...">',
@@ -210,11 +192,9 @@
         });
         if (formValues) {
             Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            try {
-                await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'checkIn', studentId: sId }) });
-                loadData();
-                Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1000 });
-            } catch (e) { Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error'); }
+            await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'checkIn', studentId: sId }) });
+            loadData();
+            Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1000 });
         }
     }
 
@@ -227,15 +207,12 @@
         days.forEach(day => {
             h += `<tr><td class="th-day">${day}</td>`;
             times.forEach(slot => {
-                const matches = allStudents.filter(s => {
-                    const v = Object.values(s);
-                    return (v[14] || "").includes(day) && (v[15] || "").startsWith(slot.split(':')[0]);
-                });
-                h += '<td style="border: 1px solid #eee; padding: 5px; vertical-align: top;">';
+                const matches = allStudents.filter(s => (Object.values(s)[14] || "").includes(day) && (Object.values(s)[15] || "").startsWith(slot.split(':')[0]));
+                h += '<td>';
                 matches.forEach(m => {
                     const v = Object.values(m);
                     const tc = allTeachers.find(t => Object.values(t)[0] == v[19]);
-                    h += `<div class="class-box"><b>${v[2]}</b><br><span class="txt-teacher">👤ครู${tc ? Object.values(tc)[2] : '?'}</span><br><span style="color:var(--main-orange); font-weight:bold;">⏳${v[16]} ชม.</span></div>`;
+                    h += `<div class="class-box"><b>${v[2]}</b><br><small class="text-primary">ครู${tc ? Object.values(tc)[2] : '?'}</small></div>`;
                 });
                 h += '</td>';
             });
@@ -260,9 +237,7 @@
             };
         };
     }
-    
-    // เริ่มทำงาน
-    window.onload = loadData;
+    loadData();
 </script>
 </body>
 </html>
