@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Support - Admin</title>
+    <title>Music Support - Student List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f8f9fa; padding: 20px; font-family: sans-serif; }
@@ -18,7 +18,7 @@
     </div>
 
     <script>
-        // ใช้ URL เดิมที่คุณมีในหน้า Apps Script ครับ
+        // *** สำคัญ: ก๊อป URL จาก Deploy ล่าสุดในหน้า Apps Script มาวางตรงนี้ ***
         const apiUrl = 'https://script.google.com/macros/s/AKfycbzWesxkO9KxF-2O-6hUKAmU5Z4kHabbuwkr-gd6JPX0N8r3LjD3modqwZmseSfBOic/exec';
 
         async function loadData() {
@@ -26,7 +26,7 @@
                 const response = await fetch(apiUrl);
                 const fullData = await response.json();
                 
-                // ดึงเฉพาะก้อน students มาแสดง
+                // แก้ให้หยิบก้อน students มาใช้
                 const students = fullData.students; 
                 
                 let html = '';
@@ -42,7 +42,7 @@
                 });
                 document.getElementById('studentList').innerHTML = html;
             } catch (error) {
-                document.getElementById('studentList').innerHTML = '<div class="alert alert-danger">❌ โหลดข้อมูลไม่สำเร็จ</div>';
+                document.getElementById('studentList').innerHTML = '<div class="alert alert-danger">❌ โหลดข้อมูลไม่สำเร็จ กรุณาเช็ค Apps Script</div>';
             }
         }
         loadData();
