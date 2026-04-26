@@ -18,7 +18,7 @@
     </div>
 
     <script>
-        // ใช้ URL ล่าสุดจากรูป Deployment ของคุณ
+        // URL ล่าสุดของคุณจากหน้า Deployment
         const apiUrl = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsl7CXi5cG9FZhvp03kr6JHdv8iAZhZ_6-7o/exec';
 
         async function loadData() {
@@ -26,7 +26,7 @@
                 const response = await fetch(apiUrl);
                 const fullData = await response.json();
                 
-                // จุดสำคัญ: ต้องเลือกหยิบเฉพาะก้อน 'students'
+                // เลือกหยิบเฉพาะก้อน 'students' มาโชว์
                 const students = fullData.students; 
                 
                 let html = '';
