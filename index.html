@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Full Restore V 0.0.073</title>
+    <title>Music Admin - Full Restore V 0.0.074</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -11,24 +11,16 @@
         :root { --main-orange: #ff6600; --teacher-blue: #007bff; --bg-light: #f8f9fa; }
         body { background: var(--bg-light); font-family: 'Sarabun', sans-serif; padding-bottom: 70px; }
         .v-badge { position: fixed; top: 10px; right: 10px; background: var(--main-orange); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.65rem; z-index: 9999; font-weight: bold; }
-        
-        /* Navigation */
         .nav-pills { justify-content: center; background: #fff; border-radius: 50px; padding: 5px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.9rem; border: none !important; }
         .nav-link.active { background-color: var(--main-orange) !important; color: white !important; }
-
-        /* Student Grid */
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 10px; }
         .std-card { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #eee; }
         .std-photo { width: 60px; height: 60px; background: #eee; border-radius: 50%; margin: 0 auto 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .std-photo img { width: 100%; height: 100%; object-fit: cover; }
         .btn-up { background: #fff3e0; color: #e67e22; border: 1px solid #ffcc80; font-size: 0.7rem; padding: 4px; border-radius: 8px; width: 100%; margin-top: 5px; font-weight: bold; }
-
-        /* Teacher View */
         .teacher-box { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; border-left: 5px solid var(--teacher-blue); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .std-item-teacher { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
-
-        /* Timetable Grid */
+        .std-item-teacher { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 12px; margin-bottom: 8px; text-align: left; }
         .table-responsive { background: white; border-radius: 12px; border: 1px solid #dee2e6; margin: 0 10px; }
         .table-timetable { min-width: 950px; margin-bottom: 0; table-layout: fixed; }
         .th-day { width: 90px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; vertical-align: middle !important; text-align: center; }
@@ -39,7 +31,7 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.073</div>
+<div class="v-badge">V 0.0.74</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -47,11 +39,12 @@
     <ul class="nav nav-pills nav-fill">
         <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
         <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">คุณครู</button></li>
-        
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
 
-    <div id="searchBox" class="px-3 mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหา..." onkeyup="handleSearch()" style="border-radius: 20px;"></div>
+    <div id="searchBox" class="px-3 mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อนักเรียน..." onkeyup="handleSearch()" style="border-radius: 20px;">
+    </div>
     
     <div id="displayArea"></div>
 </div>
@@ -78,7 +71,6 @@
         if (currentPage === 'schedule') { renderFullSchedule(area); return; }
         if (currentPage === 'teacher') { renderTeacherList(area); return; }
 
-        // หน้าหลักนักเรียน
         let html = '<div class="main-grid">';
         listData.forEach(item => {
             const v = Object.values(item);
@@ -102,28 +94,31 @@
                 <span class="badge bg-primary rounded-pill">เด็ก ${allStudents.filter(s => Object.values(s)[19] == v[0]).length} คน</span>
             </div>`;
         });
-        function viewTeacherDashboard(tId, tName) {
+        container.innerHTML = html + '</div>';
+    }
+
+    function viewTeacherDashboard(tId, tName) {
         const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
-        
-        // 1. สร้างโครงหน้าที่มีช่องค้นหาเฉพาะกิจ
         let html = `
             <div class="px-3">
                 <button class="btn btn-sm btn-link text-muted mb-2" onclick="switchPage('teacher')">← กลับ</button>
                 <h5 class="fw-bold">ครู${tName}</h5>
-                
                 <div class="mb-3">
                     <input type="text" id="teacherSearchInput" class="form-control" 
                         placeholder="🔍 ค้นชื่อนักเรียนของครู${tName}..." 
-                        onkeyup="filterMyStudents('${tId}', '${tName}')" 
+                        onkeyup="filterMyStudents('${tId}')" 
                         style="border-radius: 15px; border: 1px solid #ddd;">
                 </div>
-                
-                <div id="teacherStudentList">`;
-            // ฟังก์ชันสำหรับวาดรายการนักเรียน (แยกออกมาเพื่อให้ Search เรียกใช้ใหม่ได้)
+                <div id="teacherStudentList">${renderTeacherStudentItems(myStudents)}</div>
+            </div>`;
+        document.getElementById('displayArea').innerHTML = html;
+        // ซ่อนช่องค้นหาหลักเพื่อความชัวร์
+        document.getElementById('searchBox').style.display = 'none';
+    }
+
     function renderTeacherStudentItems(students) {
         let html = '';
         if (students.length === 0) return '<div class="text-center p-4 text-muted">ไม่พบรายชื่อนักเรียน</div>';
-        
         students.forEach(s => {
             const v = Object.values(s);
             html += `<div class="std-item-teacher">
@@ -135,37 +130,29 @@
         return html;
     }
 
-    // ฟังก์ชันดักจับการพิมพ์ในช่อง Search ของหน้าครู
-    function filterMyStudents(tId, tName) {
+    function filterMyStudents(tId) {
         const term = document.getElementById('teacherSearchInput').value.toLowerCase();
         const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
         const filtered = myStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term));
-        
-        // อัปเดตเฉพาะรายการนักเรียน ไม่ต้องวาดใหม่ทั้งหน้า
         document.getElementById('teacherStudentList').innerHTML = renderTeacherStudentItems(filtered);
     }
+
+    function switchPage(p) {
+        currentPage = p;
+        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+        document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('active');
         
-        // 2. เรียกใช้ฟังก์ชันย่อยเพื่อแสดงรายชื่อเด็ก
-        html += renderTeacherStudentItems(myStudents);
+        // ควบคุมการแสดงผลช่องค้นหาหลัก
+        const searchBox = document.getElementById('searchBox');
+        searchBox.style.display = (p === 'student') ? 'block' : 'none';
         
-        html += `</div></div>`;
-        document.getElementById('displayArea').innerHTML = html;
-    }
-        container.innerHTML = html + '</div>';
+        renderDisplay();
     }
 
-    function viewTeacherDashboard(tId, tName) {
-        const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
-        let html = `<div class="px-3"><button class="btn btn-sm btn-link text-muted mb-2" onclick="switchPage('teacher')">← กลับ</button><h5 class="fw-bold">ครู${tName}</h5>`;
-        myStudents.forEach(s => {
-            const v = Object.values(s);
-            html += `<div class="std-item-teacher">
-                <div class="d-flex justify-content-between"><b>${v[2]}</b> <span class="text-orange small">เหลือ ${v[16]} ชม.</span></div>
-                <div class="small text-muted mb-2">${v[8]} | ${v[14]} ${v[15]}น.</div>
-                <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openCheckInModal('${v[0]}', '${v[2]}')">เช็กชื่อ / บันทึกการสอน</button>
-            </div>`;
-        });
-        document.getElementById('displayArea').innerHTML = html + '</div>';
+    function handleSearch() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        const data = allStudents;
+        renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
 
     async function openCheckInModal(sId, sName) {
@@ -186,7 +173,7 @@
         const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
         const days = ['จันทร์', 'อังคาร', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
         let h = '<div class="table-responsive"><table class="table table-timetable"><thead><tr><th class="th-day">วัน/เวลา</th>';
-        times.forEach(t => h += `<th class="text-center bg-orange text-white small" style="background:#ff6600 !important; color:white;">${t}</th>`);
+        times.forEach(t => h += `<th class="text-center text-white small" style="background:#ff6600 !important;">${t}</th>`);
         h += '</tr></thead><tbody>';
         days.forEach(day => {
             h += `<tr><td class="th-day">วัน${day}</td>`;
@@ -196,31 +183,13 @@
                 matches.forEach(m => {
                     const v = Object.values(m);
                     const teacher = allTeachers.find(tc => Object.values(tc)[0] == v[19]);
-                    h += `<div class="class-box">
-                        <b>${v[2]}</b><br>
-                        <span class="txt-teacher">👤ครู${teacher ? Object.values(teacher)[2] : '?'}</span><br>
-                        <span class="txt-rem">⏳เหลือ ${v[16]}</span>
-                    </div>`;
+                    h += `<div class="class-box"><b>${v[2]}</b><br><span class="txt-teacher">👤ครู${teacher ? Object.values(teacher)[2] : '?'}</span><br><span class="txt-rem">⏳เหลือ ${v[16]}</span></div>`;
                 });
                 h += '</td>';
             });
             h += '</tr>';
         });
         container.innerHTML = h + '</tbody></table></div>';
-    }
-
-    function switchPage(p) {
-        currentPage = p;
-        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-        document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('active');
-        document.getElementById('searchBox').style.display = (p === 'schedule') ? 'none' : 'block';
-        renderDisplay();
-    }
-
-    function handleSearch() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        const data = (currentPage === 'student' ? allStudents : allTeachers);
-        renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
 
     async function handleUpload(input, id) {
