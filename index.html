@@ -92,22 +92,21 @@
     // ==========================================
     // ⚙️ ตั้งค่าที่นี่ที่เดียว
     // ==========================================
-    const appVersion = '0.0.026'; 
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbzymT95dp39rfTSmAAY_jUdmRU28xi6sr7dToZy3af1r3TZxT4gziWbIYNo5jOLv_PX/exechttps://script.google.com/macros/s/AKfycbzymT95dp39rfTSmAAY_jUdmRU28xi6sr7dToZy3af1r3TZxT4gziWbIYNo5jOLv_PX/exechttps://script.google.com/macros/s/AKfycbzymT95dp39rfTSmAAY_jUdmRU28xi6sr7dToZy3af1r3TZxT4gziWbIYNo5jOLv_PX/exec';
+    const appVersion = '0.0.027'; 
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbzymT95dp39rfTSmAAY_jUdmRU28xi6sr7dToZy3af1r3TZxT4gziWbIYNo5jOLv_PX/exec';
     // ==========================================
 
     let allStudents = [];
     let allTeachers = [];
     let currentPage = 'student';
 
-    // ฟังก์ชันอัปเดตเลขเวอร์ชันทุกจุด
     function updateVersionDisplay() {
         document.getElementById('ui-version-tag').innerText = `V ${appVersion}`;
         document.title = `Music Support - Admin V ${appVersion}`;
     }
 
     async function loadData() {
-        updateVersionDisplay(); // อัปเดตเลขเวอร์ชันตอนเริ่มโหลด
+        updateVersionDisplay();
         try {
             const res = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
@@ -204,7 +203,7 @@
     }
 
     function openEdit(id) {
-        const s = allStudents.find(x => x['รหัสนักเรียน'].toString() == id.toString());
+        const s = allStudents.find(x => x['รหัสนักเรียน'] == id);
         if (!s) return;
         document.getElementById('editId').value = s['รหัสนักเรียน'];
         document.getElementById('editNick').value = s['ชื่อเล่น'] || '';
