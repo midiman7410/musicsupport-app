@@ -3,164 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Support - Student Profile</title>
+    <title>Music Support - Admin System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { background: #f4f7f6; padding: 20px; font-family: 'Sarabun', sans-serif; }
-        .header-title { font-weight: bold; color: #333; margin-bottom: 20px; text-align: center; }
+        .header-title { font-weight: bold; color: #333; text-align: center; margin-bottom: 20px; }
         
-        /* เมนูแยกวิชา */
-        .filter-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 20px; white-space: nowrap; }
-        .filter-container::-webkit-scrollbar { display: none; }
-        .btn-filter { background: white; border: 1px solid #ddd; border-radius: 20px; padding: 6px 18px; font-size: 0.85rem; transition: 0.3s; cursor: pointer; }
-        .btn-filter.active { background: #007bff; color: white; border-color: #007bff; }
+        /* ช่องค้นหา */
+        .search-container { max-width: 500px; margin: 0 auto 20px; position: relative; }
+        .search-input { border-radius: 25px; padding-left: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #ddd; }
 
-        /* การ์ดสี่เหลี่ยม Grid */
+        /* เมนูแยกวิชา */
+        .filter-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; white-space: nowrap; }
+        .filter-container::-webkit-scrollbar { display: none; }
+        .btn-filter { background: white; border: 1px solid #ddd; border-radius: 20px; padding: 5px 18px; font-size: 0.85rem; cursor: pointer; transition: 0.3s; }
+        .btn-filter.active { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 3px 8px rgba(0,123,255,0.3); }
+
+        /* การ์ดนักเรียน (Grid) */
         .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .student-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: none; text-align: center; }
+        .student-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: none; text-align: center; position: relative; }
         
-        .nickname { font-size: 1.3rem; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+        /* ปุ่มแก้ไขมุมขวาบน */
+        .btn-edit-tool { position: absolute; top: 10px; right: 10px; background: #f8f9fa; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; cursor: pointer; font-size: 0.8rem; }
+        .btn-edit-tool:hover { background: #e9ecef; }
+
+        .nickname { font-size: 1.2rem; font-weight: 600; color: #1a1a1a; margin-top: 5px; margin-bottom: 8px; }
         
-        /* ช่องใส่รูปภาพ */
         .photo-slot {
-            width: 85px; height: 85px; background: #eee; border-radius: 50%;
-            margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
-            border: 3px solid #f8f9fa; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 80px; height: 80px; background: #eee; border-radius: 50%;
+            margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;
+            border: 3px solid #fff; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-placeholder { color: #ccc; font-size: 2rem; }
-
-        .subject-badge { background: #e7f1ff; color: #007bff; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; margin-bottom: 12px; display: inline-block; font-weight: 600; }
         
-        .info-row { font-size: 0.8rem; margin-bottom: 5px; display: flex; justify-content: space-between; }
-        .info-label { color: #888; }
-        .info-val { font-weight: 600; color: #333; }
-        .val-remain { color: #28a745; }
-        .val-leave { color: #dc3545; }
+        .subject-badge { background: #e7f1ff; color: #007bff; font-size: 0.7rem; padding: 3px 10px; border-radius: 12px; margin-bottom: 10px; display: inline-block; font-weight: 600; }
+        
+        .info-row { font-size: 0.75rem; margin-bottom: 3px; display: flex; justify-content: space-between; padding: 0 5px; }
+        .val-remain { color: #28a745; font-weight: 600; }
+        .val-leave { color: #dc3545; font-weight: 600; }
 
-        /* ปุ่มเปลี่ยนรูป */
-        .upload-label { 
-            display: block; margin-top: 15px; font-size: 0.75rem; color: #007bff; 
-            cursor: pointer; border: 1px dashed #007bff; border-radius: 10px; padding: 6px; transition: 0.3s;
-        }
-        .upload-label:hover { background: #f0f7ff; }
+        .upload-label { display: block; margin-top: 10px; font-size: 0.7rem; color: #666; cursor: pointer; border: 1px dashed #ccc; border-radius: 8px; padding: 4px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2 class="header-title">🎸 จัดการนักเรียน</h2>
-        
-        <div class="filter-container" id="filterMenu">
-            <button class="btn-filter active" onclick="filterStudent('all', this)">ทั้งหมด</button>
-            <button class="btn-filter" onclick="filterStudent('เปียโน', this)">เปียโน</button>
-            <button class="btn-filter" onclick="filterStudent('กีตาร์', this)">กีตาร์</button>
-            <button class="btn-filter" onclick="filterStudent('เบส', this)">เบส</button>
-            <button class="btn-filter" onclick="filterStudent('กลอง', this)">กลอง</button>
-        </div>
 
-        <div id="studentList" class="student-grid">
-            <div class="text-center w-100">กำลังโหลดข้อมูล...</div>
-        </div>
+<div class="container">
+    <h2 class="header-title">🎸 ระบบจัดการนักเรียน</h2>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 ค้นหาชื่อเล่น หรือ ชื่อจริง..." onkeyup="searchStudent()">
+    </div>
+    
+    <div class="filter-container" id="filterMenu">
+        <button class="btn-filter active" onclick="filterStudent('all', this)">ทั้งหมด</button>
+        <button class="btn-filter" onclick="filterStudent('เปียโน', this)">เปียโน</button>
+        <button class="btn-filter" onclick="filterStudent('กีตาร์', this)">กีตาร์</button>
+        <button class="btn-filter" onclick="filterStudent('เบส', this)">เบส</button>
+        <button class="btn-filter" onclick="filterStudent('กลอง', this)">กลอง</button>
     </div>
 
-    <script>
-        // ใช้ URL ล่าสุดที่คุณยืนยันว่าใช้งานได้แล้ว
-        const apiUrl = 'https://script.google.com/macros/s/AKfycbwY1TxOAEabKUYxxZCiT_aP3iKNBNFSpSjepySEZefHm9sos5RUJNr7BXUZgPwRhhjv/exec';
-        let allStudents = [];
+    <div id="studentList" class="student-grid">
+        <div class="text-center w-100 mt-5">กำลังเชื่อมต่อข้อมูล V13...</div>
+    </div>
+</div>
 
-        async function loadData() {
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">แก้ไขข้อมูลนักเรียน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3"><label class="small text-muted">ชื่อเล่น</label><input type="text" id="editNick" class="form-control"></div>
+                <div class="mb-3"><label class="small text-muted">ชื่อ-นามสกุล</label><input type="text" id="editFull" class="form-control"></div>
+                <div class="mb-3"><label class="small text-muted">วิชา</label><input type="text" id="editSubject" class="form-control"></div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="small text-muted">ชม. คงเหลือ</label><input type="number" id="editRemain" class="form-control"></div>
+                    <div class="col-6 mb-3"><label class="small text-muted">ลาไปแล้ว</label><input type="number" id="editLeave" class="form-control"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" id="saveBtn" class="btn btn-primary w-100" onclick="saveEdit()" style="border-radius: 12px; padding: 10px;">บันทึกไปที่ Google Sheets</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbzP6xSbQXAAmR0u1ZWHJwgacatqe7cmG9te_3YJLZgUi3VpvkXY_DOee7bdDTr2ttEX/exec';
+    let allStudents = [];
+
+    async function loadData() {
+        try {
+            const res = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
+            const data = await res.json();
+            allStudents = data.students;
+            renderStudents(allStudents);
+        } catch (e) {
+            document.getElementById('studentList').innerHTML = '❌ โหลดข้อมูลไม่สำเร็จ';
+        }
+    }
+
+    function renderStudents(data) {
+        const listDiv = document.getElementById('studentList');
+        if (data.length === 0) { listDiv.innerHTML = '<p class="w-100 text-center">ไม่พบข้อมูล</p>'; return; }
+
+        let html = '';
+        data.forEach(s => {
+            html += `
+            <div class="student-card">
+                <div class="btn-edit-tool" onclick="openEdit('${s['รหัสนักเรียน']}')">⚙️</div>
+                <div class="nickname">${s['ชื่อเล่น'] || '-'}</div>
+                <div class="photo-slot">
+                    <img src="${s['รูปโปรไฟล์'] || 'https://via.placeholder.com/80?text=👤'}">
+                </div>
+                <div class="subject-badge">${s['วิชาที่ 1'] || '-'}</div>
+                <div class="info-row"><span>คงเหลือ:</span><span class="val-remain">${s['ชั่วโมงคงเหลือ'] || 0} ชม.</span></div>
+                <div class="info-row"><span>ลาแล้ว:</span><span class="val-leave">${s['จำนวนครั้งที่ลา'] || 0} ครั้ง</span></div>
+                
+                <label class="upload-label">
+                    📷 เปลี่ยนรูป
+                    <input type="file" hidden accept="image/*" onchange="handleUpload(this, '${s['รหัสนักเรียน']}')">
+                </label>
+            </div>`;
+        });
+        listDiv.innerHTML = html;
+    }
+
+    // ฟังก์ชันค้นหา
+    function searchStudent() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allStudents.filter(s => 
+            (s['ชื่อเล่น'] || '').toLowerCase().includes(term) || 
+            (s['ชื่อ-นามสกุล'] || '').toLowerCase().includes(term)
+        );
+        renderStudents(filtered);
+    }
+
+    // ฟังก์ชันเปิด Modal แก้ไข
+    function openEdit(id) {
+        const s = allStudents.find(x => x['รหัสนักเรียน'] == id);
+        document.getElementById('editId').value = s['รหัสนักเรียน'];
+        document.getElementById('editNick').value = s['ชื่อเล่น'];
+        document.getElementById('editFull').value = s['ชื่อ-นามสกุล'];
+        document.getElementById('editSubject').value = s['วิชาที่ 1'];
+        document.getElementById('editRemain').value = s['ชั่วโมงคงเหลือ'];
+        document.getElementById('editLeave').value = s['จำนวนครั้งที่ลา'];
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    // ฟังก์ชันบันทึกข้อมูลแก้ไข
+    async function saveEdit() {
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = '⏳ กำลังบันทึกข้อมูล...';
+        btn.disabled = true;
+
+        const payload = {
+            action: 'updateStudent',
+            studentId: document.getElementById('editId').value,
+            nickname: document.getElementById('editNick').value,
+            fullName: document.getElementById('editFull').value,
+            subject: document.getElementById('editSubject').value,
+            remain: document.getElementById('editRemain').value,
+            leave: document.getElementById('editLeave').value
+        };
+
+        try {
+            await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) });
+            alert('อัปเดตข้อมูลนักเรียนเรียบร้อยแล้ว!');
+            location.reload();
+        } catch (e) {
+            alert('เกิดข้อผิดพลาดในการบันทึก');
+            btn.innerText = 'บันทึกไปที่ Google Sheets';
+            btn.disabled = false;
+        }
+    }
+
+    // ฟังก์ชันอัปโหลดรูป
+    async function handleUpload(input, studentId) {
+        const file = input.files[0];
+        if (!file) return;
+        const label = input.parentElement;
+        label.innerText = '⏳ ส่งรูป...';
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64 = e.target.result;
             try {
-                const response = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
-                const fullData = await response.json();
-                allStudents = fullData.students; 
-                renderStudents(allStudents);
-            } catch (error) {
-                document.getElementById('studentList').innerHTML = '<p class="text-danger w-100 text-center">❌ โหลดข้อมูลไม่สำเร็จ</p>';
-            }
-        }
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'uploadImage', studentId: studentId, fileName: `img_${studentId}.jpg`, base64: base64 })
+                });
+                const result = await res.json();
+                if (result.status === 'success') { alert('เปลี่ยนรูปสำเร็จ!'); location.reload(); }
+            } catch (err) { alert('อัปโหลดล้มเหลว'); label.innerText = '📷 เปลี่ยนรูป'; }
+        };
+        reader.readAsDataURL(file);
+    }
 
-        function renderStudents(data) {
-            const listDiv = document.getElementById('studentList');
-            if (!data || data.length === 0) {
-                listDiv.innerHTML = '<p class="text-center w-100 mt-5">ไม่พบข้อมูล</p>';
-                return;
-            }
+    function filterStudent(subject, btn) {
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderStudents(subject === 'all' ? allStudents : allStudents.filter(s => s['วิชาที่ 1'] === subject));
+    }
 
-            let html = '';
-            data.forEach(s => {
-                const photoHtml = s['รูปโปรไฟล์'] 
-                    ? `<img src="${s['รูปโปรไฟล์']}">` 
-                    : `<span class="photo-placeholder">👤</span>`;
-
-                html += `
-                    <div class="student-card">
-                        <div class="nickname">${s['ชื่อเล่น'] || 'N/A'}</div>
-                        <div class="photo-slot">${photoHtml}</div>
-                        <div class="subject-badge">${s['วิชาที่ 1'] || '-'}</div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">คงเหลือ</span>
-                            <span class="info-val val-remain">${s['ชั่วโมงคงเหลือ'] || 0} ชม.</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ลาไปแล้ว</span>
-                            <span class="info-val val-leave">${s['จำนวนครั้งที่ลา'] || 0} ครั้ง</span>
-                        </div>
-
-                        <label class="upload-label">
-                            📷 เปลี่ยนรูป
-                            <input type="file" hidden accept="image/*" onchange="handleUpload(this, '${s['รหัสนักเรียน']}')">
-                        </label>
-                    </div>`;
-            });
-            listDiv.innerHTML = html;
-        }
-
-        async function handleUpload(input, studentId) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const label = input.parentElement;
-            const originalText = label.innerHTML;
-            label.innerText = '⏳ กำลังส่ง...';
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const base64 = e.target.result;
-                try {
-                    const res = await fetch(apiUrl, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            action: 'uploadImage',
-                            studentId: studentId,
-                            fileName: `img_${studentId}.jpg`,
-                            base64: base64
-                        })
-                    });
-                    const result = await res.json();
-                    if (result.status === 'success') {
-                        alert('อัปเดตรูปสำเร็จ!');
-                        loadData(); // โหลดข้อมูลใหม่เพื่อแสดงรูปที่เพิ่งอัปโหลด
-                    } else {
-                        alert('เกิดข้อผิดพลาด: ' + result.message);
-                        label.innerHTML = originalText;
-                    }
-                } catch (err) {
-                    alert('อัปโหลดล้มเหลว กรุณาลองใหม่');
-                    label.innerHTML = originalText;
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function filterStudent(subject, btn) {
-            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderStudents(subject === 'all' ? allStudents : allStudents.filter(s => s['วิชาที่ 1'] === subject));
-        }
-
-        loadData();
-    </script>
+    loadData();
+</script>
 </body>
 </html>
