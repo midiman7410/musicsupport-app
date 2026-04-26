@@ -47,6 +47,7 @@
     <ul class="nav nav-pills nav-fill">
         <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
         <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">คุณครู</button></li>
+        
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
 
@@ -101,6 +102,55 @@
                 <span class="badge bg-primary rounded-pill">เด็ก ${allStudents.filter(s => Object.values(s)[19] == v[0]).length} คน</span>
             </div>`;
         });
+        function viewTeacherDashboard(tId, tName) {
+        const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
+        
+        // 1. สร้างโครงหน้าที่มีช่องค้นหาเฉพาะกิจ
+        let html = `
+            <div class="px-3">
+                <button class="btn btn-sm btn-link text-muted mb-2" onclick="switchPage('teacher')">← กลับ</button>
+                <h5 class="fw-bold">ครู${tName}</h5>
+                
+                <div class="mb-3">
+                    <input type="text" id="teacherSearchInput" class="form-control" 
+                        placeholder="🔍 ค้นชื่อนักเรียนของครู${tName}..." 
+                        onkeyup="filterMyStudents('${tId}', '${tName}')" 
+                        style="border-radius: 15px; border: 1px solid #ddd;">
+                </div>
+                
+                <div id="teacherStudentList">`;
+            // ฟังก์ชันสำหรับวาดรายการนักเรียน (แยกออกมาเพื่อให้ Search เรียกใช้ใหม่ได้)
+    function renderTeacherStudentItems(students) {
+        let html = '';
+        if (students.length === 0) return '<div class="text-center p-4 text-muted">ไม่พบรายชื่อนักเรียน</div>';
+        
+        students.forEach(s => {
+            const v = Object.values(s);
+            html += `<div class="std-item-teacher">
+                <div class="d-flex justify-content-between"><b>${v[2]}</b> <span class="text-orange small">เหลือ ${v[16]} ชม.</span></div>
+                <div class="small text-muted mb-2">${v[8]} | ${v[14]} ${v[15]}น.</div>
+                <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openCheckInModal('${v[0]}', '${v[2]}')">เช็กชื่อ / บันทึกการสอน</button>
+            </div>`;
+        });
+        return html;
+    }
+
+    // ฟังก์ชันดักจับการพิมพ์ในช่อง Search ของหน้าครู
+    function filterMyStudents(tId, tName) {
+        const term = document.getElementById('teacherSearchInput').value.toLowerCase();
+        const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
+        const filtered = myStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term));
+        
+        // อัปเดตเฉพาะรายการนักเรียน ไม่ต้องวาดใหม่ทั้งหน้า
+        document.getElementById('teacherStudentList').innerHTML = renderTeacherStudentItems(filtered);
+    }
+        
+        // 2. เรียกใช้ฟังก์ชันย่อยเพื่อแสดงรายชื่อเด็ก
+        html += renderTeacherStudentItems(myStudents);
+        
+        html += `</div></div>`;
+        document.getElementById('displayArea').innerHTML = html;
+    }
         container.innerHTML = html + '</div>';
     }
 
