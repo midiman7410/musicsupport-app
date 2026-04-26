@@ -3,38 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Dashboard V 0.0.059</title>
+    <title>Music Admin - Fixed V 0.0.060</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --school-orange: #ff6600; --soft-orange: #fff5ed; --dark-grey: #444; }
-        body { background: #f4f4f4; padding: 15px; font-family: 'Sarabun', sans-serif; padding-bottom: 60px; }
+        :root { --school-orange: #ff6600; --soft-orange: #fff5ed; }
+        body { background: #fdfdfd; padding: 10px; font-family: 'Sarabun', sans-serif; padding-bottom: 60px; }
         .header-title { font-weight: bold; color: var(--school-orange); text-align: center; margin-bottom: 15px; }
-        
-        .nav-pills { justify-content: center; margin-bottom: 20px; background: #ddd; border-radius: 12px; padding: 5px; }
-        .nav-link { border-radius: 8px !important; color: #555; font-weight: 600; }
+        .nav-pills { justify-content: center; margin-bottom: 20px; background: #eee; border-radius: 12px; padding: 5px; }
+        .nav-link { border-radius: 8px !important; color: #555; font-weight: 600; font-size: 0.85rem; }
         .nav-link.active { background-color: var(--school-orange) !important; color: white !important; }
 
-        /* New Schedule Dashboard Layout */
-        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
-        .day-box { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #eee; }
-        .day-label { padding: 10px; background: var(--school-orange); color: white; font-weight: bold; text-align: center; font-size: 1.1rem; }
+        /* ตารางเรียนแบบช่อง (Dashboard Grid) */
+        .schedule-grid { display: flex; flex-direction: column; gap: 15px; }
+        .day-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #ffccaa; }
+        .day-header { background: var(--school-orange); color: white; padding: 10px 15px; font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; }
         
-        .class-item { display: flex; padding: 12px; border-bottom: 1px solid #f1f1f1; align-items: center; }
-        .class-item:last-child { border-bottom: none; }
-        
-        .time-tag { min-width: 75px; text-align: center; background: var(--soft-orange); color: var(--school-orange); border-radius: 8px; padding: 5px; font-weight: bold; font-size: 0.85rem; border: 1px solid #ffd1b3; }
-        .student-detail { flex-grow: 1; padding-left: 12px; }
-        .name-txt { font-weight: 600; font-size: 1rem; color: var(--dark-grey); display: block; }
-        .info-txt { font-size: 0.75rem; color: #888; }
-        
-        .count-badge { background: #ff4500; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; float: right; margin-top: 2px; }
+        .class-list { padding: 0; margin: 0; list-style: none; }
+        .class-row { display: grid; grid-template-columns: 80px 1fr 60px; align-items: center; padding: 12px; border-bottom: 1px solid #fff0e6; }
+        .class-row:last-child { border-bottom: none; }
+        .time-box { font-weight: bold; color: var(--school-orange); background: var(--soft-orange); padding: 5px; border-radius: 8px; text-align: center; font-size: 0.85rem; }
+        .student-name { font-weight: 600; padding-left: 10px; font-size: 1rem; }
+        .sub-info { font-size: 0.75rem; color: #888; padding-left: 10px; display: block; }
+        .remain-box { text-align: center; background: #ffede0; border-radius: 8px; padding: 4px; border: 1px solid #ffd1b3; }
+        .remain-num { font-weight: bold; color: #ff4500; font-size: 0.9rem; display: block; }
+        .remain-unit { font-size: 0.6rem; color: #ff6600; }
 
-        /* Original Grid for Students */
-        .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        /* หน้าจอนักเรียน */
+        .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
         .data-card { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #eee; }
-        .photo-slot { width: 70px; height: 70px; background: #eee; border-radius: 50%; margin: 0 auto 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .photo-slot { width: 70px; height: 70px; background: #f0f0f0; border-radius: 50%; margin: 0 auto 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
@@ -42,13 +41,13 @@
 
 <div class="container-fluid">
     <h2 class="header-title">🟠 MUSIC SCHOOL</h2>
-    <ul class="nav nav-pills nav-fill mb-3">
+    <ul class="nav nav-pills nav-fill">
         <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
         <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">คุณครู</button></li>
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
-    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="ค้นหา..." onkeyup="handleSearch()" style="border-radius: 10px;"></div>
-    <div id="displayArea"></div>
+    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหา..." onkeyup="handleSearch()" style="border-radius: 10px;"></div>
+    <div id="displayArea"><div class="text-center mt-5 text-muted">กำลังโหลดข้อมูล...</div></div>
 </div>
 
 <script>
@@ -62,24 +61,28 @@
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
             renderDisplay();
-        } catch (e) { document.getElementById('displayArea').innerHTML = 'โหลดข้อมูลไม่สำเร็จ...'; }
+        } catch (e) { document.getElementById('displayArea').innerHTML = 'เชื่อมต่อฐานข้อมูลไม่ได้'; }
     }
 
     function renderDisplay(data = null) {
         const area = document.getElementById('displayArea');
         const listData = data || (currentPage === 'student' ? allStudents : allTeachers);
-        if (currentPage === 'schedule') { renderScheduleDashboard(); return; }
+        
+        if (currentPage === 'schedule') {
+            renderScheduleLayout(area);
+            return;
+        }
 
         let html = '<div class="main-grid">';
         listData.forEach(item => {
             const v = Object.values(item); const id = v[0];
             if (currentPage === 'student') {
-                const img = v[18] && v[18].startsWith('data:image') ? `<img src="${v[18]}">` : '👤';
+                const img = v[18] && v[18].toString().startsWith('data:image') ? `<img src="${v[18]}">` : '👤';
                 html += `<div class="data-card">
                     <div class="photo-slot">${img}</div>
                     <div class="fw-bold" style="font-size:0.9rem;">${v[2]}</div>
-                    <div class="small text-muted" style="font-size:0.75rem;">เหลือ ${v[16] || 0} ชม.</div>
-                    <label class="btn btn-outline-warning btn-sm w-100 mt-2" style="font-size:0.7rem;">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
+                    <div class="small text-muted">เหลือ ${v[16] || 0} ชม.</div>
+                    <label class="btn btn-outline-warning btn-sm w-100 mt-2" style="font-size:0.7rem;">📷 รูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
                 </div>`;
             } else {
                 html += `<div class="data-card"><b>${v[2]}</b><br><small class="text-muted">ID: ${id}</small></div>`;
@@ -88,37 +91,38 @@
         area.innerHTML = html + '</div>';
     }
 
-    function renderScheduleDashboard() {
-        // ตัดวันพุธออก เรียงลำดับใหม่
+    function renderScheduleLayout(container) {
         const days = ['จันทร์', 'อังคาร', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
         let html = '<div class="schedule-grid">';
         
         days.forEach(day => {
             const classes = allStudents.filter(s => (Object.values(s)[14] || "").includes(day));
-            // เรียงเวลาจากเช้าไปเย็น
-            classes.sort((a, b) => (Object.values(a)[15] || "00:00").localeCompare(Object.values(b)[15] || "00:00"));
+            classes.sort((a, b) => (Object.values(a)[15] || "").toString().localeCompare((Object.values(b)[15] || "").toString()));
 
             html += `
-            <div class="day-box">
-                <div class="day-label">วัน${day}</div>
-                <div class="day-content">
+            <div class="day-card">
+                <div class="day-header"><span>วัน${day}</span><span style="font-size:0.8rem;">${classes.length} คลาส</span></div>
+                <div class="class-list">
                     ${classes.length > 0 ? classes.map(s => {
                         const v = Object.values(s);
                         const t = allTeachers.find(tc => Object.values(tc)[0] == v[19]);
                         return `
-                        <div class="class-item">
-                            <div class="time-tag">${v[15] || '--:--'}</div>
-                            <div class="student-detail">
-                                <span class="count-badge">${v[16] || 0}</span>
-                                <span class="name-txt">${v[2]}</span>
-                                <span class="info-txt">🎸 ${v[8] || 'ดนตรี'} - ครู${t ? Object.values(t)[2] : '...'}</span>
+                        <div class="class-row">
+                            <div class="time-box">${v[15] || '--:--'}</div>
+                            <div>
+                                <span class="student-name">${v[2]}</span>
+                                <span class="sub-info">🎸 ${v[8]} - ครู${t ? Object.values(t)[2] : '?'}</span>
+                            </div>
+                            <div class="remain-box">
+                                <span class="remain-num">${v[16] || 0}</span>
+                                <span class="remain-unit">ชม.</span>
                             </div>
                         </div>`;
-                    }).join('') : '<div class="p-3 text-center text-muted small">ไม่มีคลาสเรียน</div>'}
+                    }).join('') : '<div class="p-3 text-center text-muted small">ไม่มีเรียน</div>'}
                 </div>
             </div>`;
         });
-        area.innerHTML = html + '</div>';
+        container.innerHTML = html + '</div>';
     }
 
     function switchPage(p) {
