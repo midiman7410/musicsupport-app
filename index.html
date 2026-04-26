@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Support - Admin V 0.0.038</title>
+    <title>Music Support - Admin V 0.0.039</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -20,11 +20,10 @@
         .day-header { padding: 10px; font-weight: bold; text-align: center; color: white; }
         .day-mon { background: #ffd600; color: #333; } .day-tue { background: #ff80ab; } .day-wed { background: #4caf50; }
         .day-thu { background: #ff9800; } .day-fri { background: #2196f3; } .day-sat { background: #9c27b0; } .day-sun { background: #f44336; }
-        .class-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-        .class-item:last-child { border-bottom: none; }
-        .class-time { font-weight: bold; color: #007bff; margin-right: 10px; }
-        .class-info { display: flex; flex-direction: column; }
-        .class-subject { font-size: 0.75rem; color: #666; }
+        .class-item { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; transition: background 0.2s; }
+        .class-item:hover { background: #f9f9f9; }
+        .class-time { font-weight: bold; color: #007bff; min-width: 85px; }
+        .class-subject { font-size: 0.75rem; color: #666; margin-top: 2px; }
 
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
         .data-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; }
@@ -35,7 +34,7 @@
 </head>
 <body>
 
-<div class="version-tag">V 0.0.038</div>
+<div class="version-tag">V 0.0.039</div>
 
 <div class="container">
     <h2 class="header-title">🎸 Music Support Admin</h2>
@@ -47,7 +46,7 @@
     </ul>
 
     <div id="searchBox" class="mb-4">
-        <input type="text" id="searchInput" class="form-control" style="border-radius: 25px;" placeholder="🔍 ค้นหา..." onkeyup="handleSearch()">
+        <input type="text" id="searchInput" class="form-control" style="border-radius: 25px;" placeholder="🔍 ค้นหาชื่อเล่น..." onkeyup="handleSearch()">
     </div>
 
     <div id="displayArea">
@@ -55,9 +54,33 @@
     </div>
 </div>
 
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0"><h5>📝 แก้ไขข้อมูล</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3"><label class="small text-muted">ชื่อเล่น</label><input type="text" id="editNick" class="form-control"></div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="small text-muted">วันเรียน</label><input type="text" id="editDay" class="form-control" placeholder="เช่น จันทร์"></div>
+                    <div class="col-6 mb-3"><label class="small text-muted">เวลาเรียน</label><input type="text" id="editTime" class="form-control" placeholder="10:00"></div>
+                </div>
+                <div class="mb-3"><label class="small text-muted">รหัสครูผู้สอน (คอลัมน์ T)</label><input type="text" id="editTeacherCode" class="form-control" placeholder="รหัสครู"></div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="small text-muted">ชม. คงเหลือ</label><input type="number" id="editRemain" class="form-control"></div>
+                    <div class="col-6 mb-3"><label class="small text-muted">วิชา</label><input type="text" id="editSubject" class="form-control"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0"><button type="button" id="saveBtn" class="btn btn-primary w-100" onclick="saveEdit()" style="border-radius: 12px;">บันทึก</button></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const apiUrl = 'https://script.google.com/macros/s/AKfycby0JWsd9ETsAlt81Aiw66Cb7Jha6c1XRiJjv80XOKVneXqiY0LxT93pgHBY7hwyoCOO/exec';
     let allStudents = [];
+    let allTeachers = [];
     let currentPage = 'student';
 
     async function loadData() {
@@ -65,6 +88,7 @@
             const res = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
             allStudents = data.students || [];
+            allTeachers = data.teachers || [];
             renderDisplay();
         } catch (e) { document.getElementById('displayArea').innerHTML = 'เกิดข้อผิดพลาด'; }
     }
@@ -72,30 +96,39 @@
     function switchPage(page) {
         currentPage = page;
         document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
-        if(page === 'student') document.getElementById('navStudent').classList.add('active');
-        if(page === 'teacher') document.getElementById('navTeacher').classList.add('active');
-        if(page === 'schedule') document.getElementById('navSchedule').classList.add('active');
-        
+        document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
         document.getElementById('searchBox').style.display = (page === 'schedule') ? 'none' : 'block';
         renderDisplay();
     }
 
-    function renderDisplay() {
+    function renderDisplay(data = null) {
         const area = document.getElementById('displayArea');
+        const listData = data || (currentPage === 'student' ? allStudents : allTeachers);
+        
         if (currentPage === 'student') {
             let html = '<div class="main-grid">';
-            allStudents.forEach(s => {
+            listData.forEach(s => {
                 const v = Object.values(s);
                 let img = v.find(val => val && val.toString().startsWith('data:image')) || 'https://via.placeholder.com/80?text=👤';
                 html += `<div class="data-card">
-                    <div class="name-title" style="font-weight:bold;">${s['ชื่อเล่น'] || v[2]}</div>
+                    <div class="btn-edit-tool" onclick="openEdit('${v[0]}')">⚙️</div>
+                    <div class="name-title">${s['ชื่อเล่น'] || v[2]}</div>
                     <div class="photo-slot"><img src="${img}"></div>
-                    <div style="font-size:0.8rem; color:#007bff;">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
+                    <div style="font-size:0.75rem; color:#007bff;">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
                 </div>`;
             });
             area.innerHTML = html + '</div>';
-        } 
-        else if (currentPage === 'schedule') {
+        } else if (currentPage === 'teacher') {
+            let html = '<div class="main-grid">';
+            listData.forEach(t => {
+                const v = Object.values(t);
+                html += `<div class="data-card">
+                    <div class="name-title">${t['ชื่อเล่น'] || v[2]}</div>
+                    <div style="font-size:0.75rem; color:#666;">ID: ${v[0]}</div>
+                </div>`;
+            });
+            area.innerHTML = html + '</div>';
+        } else if (currentPage === 'schedule') {
             renderSchedule();
         }
     }
@@ -105,15 +138,8 @@
         const dayClasses = { 'จันทร์': 'day-mon', 'อังคาร': 'day-tue', 'พุธ': 'day-wed', 'พฤหัสบดี': 'day-thu', 'ศุกร์': 'day-fri', 'เสาร์': 'day-sat', 'อาทิตย์': 'day-sun' };
         
         let html = '<div class="schedule-container">';
-        
         days.forEach(dayName => {
-            // กรองนักเรียนที่เรียนในวันนั้นๆ (เช็คจากคอลัมน์ O หรือคอลัมน์ที่ 15)
-            const studentsInDay = allStudents.filter(s => {
-                const dayVal = (s['หมายเหตุ'] || Object.values(s)[14] || "").toString();
-                return dayVal.includes(dayName);
-            });
-
-            // เรียงเวลาเรียน (คอลัมน์ P)
+            const studentsInDay = allStudents.filter(s => (s['หมายเหตุ'] || Object.values(s)[14] || "").toString().includes(dayName));
             studentsInDay.sort((a, b) => (Object.values(a)[15] || "").localeCompare(Object.values(b)[15] || ""));
 
             html += `
@@ -122,29 +148,62 @@
                 <div class="day-body">
                     ${studentsInDay.length > 0 ? studentsInDay.map(s => {
                         const v = Object.values(s);
+                        const tCode = v[19] || ""; // คอลัมน์ T (Index 19)
+                        // ค้นหาชื่อครูจากรหัสใน AllTeachers
+                        const teacher = allTeachers.find(t => Object.values(t)[0] == tCode);
+                        const teacherName = teacher ? (teacher['ชื่อเล่น'] || Object.values(teacher)[2]) : "ไม่ระบุครู";
+
                         return `
-                        <div class="class-item d-flex align-items-center">
-                            <div class="class-time">${v[15] || 'ไม่ระบุ'}</div>
+                        <div class="class-item d-flex">
+                            <div class="class-time">${v[15] || '--:--'}</div>
                             <div class="class-info">
                                 <strong>${s['ชื่อเล่น'] || v[2]}</strong>
-                                <span class="class-subject">🎸 ${v[8] || 'วิชา'} - ครู${v[9] || 'ผู้สอน'}</span>
+                                <div class="class-subject">🎸 ${v[8] || 'วิชา'} - ครู${teacherName}</div>
                             </div>
                         </div>`;
-                    }).join('') : '<div class="p-3 text-muted text-center" style="font-size:0.8rem;">ไม่มีตารางเรียน</div>'}
+                    }).join('') : '<div class="p-3 text-muted text-center small">ไม่มีสอน</div>'}
                 </div>
             </div>`;
         });
-
         document.getElementById('displayArea').innerHTML = html + '</div>';
+    }
+
+    function openEdit(id) {
+        const s = allStudents.find(x => Object.values(x)[0] == id);
+        if (!s) return;
+        const v = Object.values(s);
+        document.getElementById('editId').value = v[0];
+        document.getElementById('editNick').value = s['ชื่อเล่น'] || v[2] || "";
+        document.getElementById('editDay').value = s['หมายเหตุ'] || v[14] || "";
+        document.getElementById('editTime').value = s['วันหมดอายุ'] || v[15] || "";
+        document.getElementById('editTeacherCode').value = v[19] || ""; // คอลัมน์ T
+        document.getElementById('editRemain').value = s['ชั่วโมงคงเหลือ'] || v[16] || 0;
+        document.getElementById('editSubject').value = s['วิชาที่ 1'] || v[8] || "";
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    async function saveEdit() {
+        const btn = document.getElementById('saveBtn'); btn.disabled = true;
+        const payload = {
+            action: 'updateStudent',
+            studentId: document.getElementById('editId').value,
+            nickname: document.getElementById('editNick').value,
+            day: document.getElementById('editDay').value,
+            time: document.getElementById('editTime').value,
+            teacherCode: document.getElementById('editTeacherCode').value, // ส่งรหัสครูไปเซฟคอลัมน์ T
+            remain: document.getElementById('editRemain').value,
+            subject: document.getElementById('editSubject').value
+        };
+        try {
+            await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) });
+            Swal.fire('สำเร็จ', 'อัปเดตข้อมูลแล้ว', 'success').then(() => location.reload());
+        } catch (e) { btn.disabled = false; }
     }
 
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term));
-        const area = document.getElementById('displayArea');
-        if(currentPage === 'student') {
-            // โค้ดแสดงผลที่กรองแล้ว (คล้ายด้านบน)
-        }
+        const data = currentPage === 'student' ? allStudents : allTeachers;
+        renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
 
     loadData();
