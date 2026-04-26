@@ -10,57 +10,46 @@
         body { background: #f4f7f6; padding: 20px; font-family: 'Sarabun', sans-serif; }
         .header-title { font-weight: bold; color: #333; margin-bottom: 20px; text-align: center; }
         
-        /* แถบเมนูเลือกวิชา */
-        .filter-container { 
-            display: flex; gap: 8px; overflow-x: auto; 
-            padding-bottom: 15px; margin-bottom: 20px; white-space: nowrap;
-        }
+        /* เมนูแยกวิชา */
+        .filter-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 20px; white-space: nowrap; }
         .filter-container::-webkit-scrollbar { display: none; }
-        .btn-filter { 
-            background: white; border: 1px solid #ddd; border-radius: 20px; 
-            padding: 6px 18px; font-size: 0.85rem; transition: 0.3s;
-        }
+        .btn-filter { background: white; border: 1px solid #ddd; border-radius: 20px; padding: 6px 18px; font-size: 0.85rem; transition: 0.3s; cursor: pointer; }
         .btn-filter.active { background: #007bff; color: white; border-color: #007bff; }
 
-        /* ดีไซน์การ์ดแบบสี่เหลี่ยม (Grid) */
-        .student-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* ปรับขนาดสี่เหลี่ยมตามหน้าจอ */
-            gap: 15px;
-        }
-        .student-card { 
-            background: white; border-radius: 20px; padding: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: none;
-            text-align: center; position: relative; overflow: hidden;
-        }
+        /* การ์ดสี่เหลี่ยม Grid */
+        .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .student-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: none; text-align: center; }
         
-        /* ชื่อเล่นอยู่บนสุด */
         .nickname { font-size: 1.3rem; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
         
         /* ช่องใส่รูปภาพ */
         .photo-slot {
-            width: 80px; height: 80px; background: #eee; border-radius: 50%;
-            margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;
-            border: 3px solid #f8f9fa; overflow: hidden;
+            width: 85px; height: 85px; background: #eee; border-radius: 50%;
+            margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+            border: 3px solid #f8f9fa; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
         .photo-placeholder { color: #ccc; font-size: 2rem; }
 
-        /* ข้อมูลด้านล่าง */
-        .subject-badge { 
-            background: #e7f1ff; color: #007bff; font-size: 0.75rem; 
-            padding: 3px 10px; border-radius: 12px; margin-bottom: 10px; display: inline-block;
-        }
+        .subject-badge { background: #e7f1ff; color: #007bff; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; margin-bottom: 12px; display: inline-block; font-weight: 600; }
+        
         .info-row { font-size: 0.8rem; margin-bottom: 5px; display: flex; justify-content: space-between; }
         .info-label { color: #888; }
         .info-val { font-weight: 600; color: #333; }
         .val-remain { color: #28a745; }
         .val-leave { color: #dc3545; }
+
+        /* ปุ่มเปลี่ยนรูป */
+        .upload-label { 
+            display: block; margin-top: 15px; font-size: 0.75rem; color: #007bff; 
+            cursor: pointer; border: 1px dashed #007bff; border-radius: 10px; padding: 6px; transition: 0.3s;
+        }
+        .upload-label:hover { background: #f0f7ff; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 class="header-title">🎸 ทำเนียบนนักเรียน</h2>
+        <h2 class="header-title">🎸 จัดการนักเรียน</h2>
         
         <div class="filter-container" id="filterMenu">
             <button class="btn-filter active" onclick="filterStudent('all', this)">ทั้งหมด</button>
@@ -76,7 +65,8 @@
     </div>
 
     <script>
-        const apiUrl = 'https://script.google.com/macros/s/AKfycbyp8CEAU2ktKnUQIDeRCT8Y5MJAIguVNcbIuEcKeI9S4Au4mm21qrgXmFWFCwL10QrJ/exec';
+        // ใช้ URL ล่าสุดที่คุณยืนยันว่าใช้งานได้แล้ว
+        const apiUrl = 'https://script.google.com/macros/s/AKfycbwY1TxOAEabKUYxxZCiT_aP3iKNBNFSpSjepySEZefHm9sos5RUJNr7BXUZgPwRhhjv/exec';
         let allStudents = [];
 
         async function loadData() {
@@ -86,7 +76,7 @@
                 allStudents = fullData.students; 
                 renderStudents(allStudents);
             } catch (error) {
-                document.getElementById('studentList').innerHTML = '<p class="text-danger">❌ โหลดข้อมูลไม่สำเร็จ</p>';
+                document.getElementById('studentList').innerHTML = '<p class="text-danger w-100 text-center">❌ โหลดข้อมูลไม่สำเร็จ</p>';
             }
         }
 
@@ -99,16 +89,14 @@
 
             let html = '';
             data.forEach(s => {
+                const photoHtml = s['รูปโปรไฟล์'] 
+                    ? `<img src="${s['รูปโปรไฟล์']}">` 
+                    : `<span class="photo-placeholder">👤</span>`;
+
                 html += `
                     <div class="student-card">
                         <div class="nickname">${s['ชื่อเล่น'] || 'N/A'}</div>
-                        
-                        <div class="photo-slot">
-                            ${s['รูปโปรไฟล์'] 
-                                ? `<img src="${s['รูปโปรไฟล์']}">` 
-                                : `<span class="photo-placeholder">👤</span>`}
-                        </div>
-
+                        <div class="photo-slot">${photoHtml}</div>
                         <div class="subject-badge">${s['วิชาที่ 1'] || '-'}</div>
                         
                         <div class="info-row">
@@ -119,19 +107,57 @@
                             <span class="info-label">ลาไปแล้ว</span>
                             <span class="info-val val-leave">${s['จำนวนครั้งที่ลา'] || 0} ครั้ง</span>
                         </div>
+
+                        <label class="upload-label">
+                            📷 เปลี่ยนรูป
+                            <input type="file" hidden accept="image/*" onchange="handleUpload(this, '${s['รหัสนักเรียน']}')">
+                        </label>
                     </div>`;
             });
             listDiv.innerHTML = html;
         }
 
+        async function handleUpload(input, studentId) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const label = input.parentElement;
+            const originalText = label.innerHTML;
+            label.innerText = '⏳ กำลังส่ง...';
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result;
+                try {
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'uploadImage',
+                            studentId: studentId,
+                            fileName: `img_${studentId}.jpg`,
+                            base64: base64
+                        })
+                    });
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        alert('อัปเดตรูปสำเร็จ!');
+                        loadData(); // โหลดข้อมูลใหม่เพื่อแสดงรูปที่เพิ่งอัปโหลด
+                    } else {
+                        alert('เกิดข้อผิดพลาด: ' + result.message);
+                        label.innerHTML = originalText;
+                    }
+                } catch (err) {
+                    alert('อัปโหลดล้มเหลว กรุณาลองใหม่');
+                    label.innerHTML = originalText;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
         function filterStudent(subject, btn) {
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            if (subject === 'all') {
-                renderStudents(allStudents);
-            } else {
-                renderStudents(allStudents.filter(s => s['วิชาที่ 1'] === subject));
-            }
+            renderStudents(subject === 'all' ? allStudents : allStudents.filter(s => s['วิชาที่ 1'] === subject));
         }
 
         loadData();
