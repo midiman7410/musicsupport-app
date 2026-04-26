@@ -92,7 +92,7 @@
     // ==========================================
     // ⚙️ ตั้งค่าที่นี่ที่เดียว
     // ==========================================
-    const appVersion = '0.0.031'; // อัปเป็น 31
+    const appVersion = '0.0.032'; 
     const apiUrl = 'https://script.google.com/macros/s/AKfycby0JWsd9ETsAlt81Aiw66Cb7Jha6c1XRiJjv80XOKVneXqiY0LxT93pgHBY7hwyoCOO/exec';
     // ==========================================
 
@@ -135,9 +135,12 @@
         if (currentPage === 'student') {
             const displayData = data || allStudents;
             displayData.forEach(s => {
-                // ✅ แก้ไข: เช็คว่าถ้าข้อมูลรูปขึ้นต้นด้วย data:image (Base64) ให้แสดงเลย ถ้าไม่มีให้ใช้ Placeholder
-                const profileImg = (s['รูปโปรไฟล์'] && s['รูปโปรไฟล์'].startsWith('data:image')) 
-                                    ? s['รูปโปรไฟล์'] 
+                // 🛠️ แก้ไข: ดึงข้อมูลรูปจากคอลัมน์ S (ลำดับที่ 19)
+                const keys = Object.keys(s);
+                let imgData = s['รูปโปรไฟล์'] || s[keys[18]]; 
+
+                const profileImg = (imgData && imgData.toString().startsWith('data:image')) 
+                                    ? imgData 
                                     : 'https://via.placeholder.com/80?text=👤';
 
                 html += `
@@ -186,11 +189,11 @@
     async function handleUpload(input, id) {
         const file = input.files[0]; if (!file) return;
         
-        // บีบอัดรูปภาพก่อนส่ง (เพื่อไม่ให้ไฟล์หนักเกินไปสำหรับ Sheet)
-        const base64 = await resizeImage(file, 300); 
-
         document.getElementById(`label-${id}`).style.display = 'none';
         document.getElementById(`progress-${id}`).style.display = 'flex';
+
+        // ลดขนาดรูปภาพลงเหลือความกว้าง 300px (เพื่อให้บันทึกลง Sheet ได้เร็ว)
+        const base64 = await resizeImage(file, 300);
         
         try {
             const res = await fetch(apiUrl, {
@@ -199,16 +202,15 @@
             });
             const result = await res.json();
             if (result.status === 'success') {
-                Swal.fire({ icon: 'success', title: 'อัปโหลดแล้ว!', timer: 1000, showConfirmButton: false }).then(() => loadData());
+                Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 800, showConfirmButton: false }).then(() => loadData());
             } else { throw new Error(result.message); }
         } catch (err) {
-            Swal.fire('ล้มเหลว', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+            Swal.fire('ล้มเหลว', 'เชื่อมต่อผิดพลาด', 'error');
             document.getElementById(`label-${id}`).style.display = 'block';
             document.getElementById(`progress-${id}`).style.display = 'none';
         }
     }
 
-    // ฟังก์ชันช่วยลดขนาดรูปภาพ
     function resizeImage(file, maxWidth) {
         return new Promise((resolve) => {
             const reader = new FileReader();
