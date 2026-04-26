@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Full Restore V 0.0.76</title>
+    <title>Music Admin - Full Restore V 0.0.77</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -30,7 +30,7 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.76</div>
+<div class="v-badge">V 0.0.77</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -60,7 +60,7 @@
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
             renderDisplay();
-        } catch (e) { document.getElementById('displayArea').innerHTML = '<div class="text-center p-5">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่</div>'; }
+        } catch (e) { document.getElementById('displayArea').innerHTML = '<div class="text-center p-5">โหลดข้อมูลไม่สำเร็จ</div>'; }
     }
 
     function renderDisplay() {
@@ -75,11 +75,7 @@
     function renderOverview(container) {
         const totalStudents = allStudents.length;
         const totalTeachers = allTeachers.length;
-        // ปรับการหาชั่วโมงคงเหลือให้ยืดหยุ่นขึ้น
-        const lowHours = allStudents.filter(s => {
-            const v = Object.values(s);
-            return parseFloat(v[16]) <= 2;
-        }).length;
+        const lowHours = allStudents.filter(s => parseFloat(Object.values(s)[16]) <= 2).length;
 
         container.innerHTML = `
             <div class="px-3">
@@ -100,21 +96,15 @@
     function renderStudentList(filteredData = null) {
         const area = document.getElementById('displayArea');
         const listData = filteredData || allStudents;
-        if (listData.length === 0) { area.innerHTML = '<div class="text-center p-5">ไม่พบข้อมูล</div>'; return; }
-
         let html = '<div class="main-grid">';
         listData.forEach(item => {
             const v = Object.values(item);
-            const stdId = v[0];
-            const stdName = v[2] || "ไม่ระบุชื่อ"; // แก้ปัญหาชื่อไม่ขึ้น
-            const remainHr = v[16] || 0;
             const photo = v[18] && v[18].toString().startsWith('data') ? `<img src="${v[18]}">` : '👤';
-            
             html += `<div class="std-card">
                 <div class="std-photo">${photo}</div>
-                <div class="fw-bold" style="font-size:0.85rem;">${stdName}</div>
-                <div class="small" style="color:var(--main-orange)">เหลือ ${remainHr} ชม.</div>
-                <label class="btn-up">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${stdId}')"></label>
+                <div class="fw-bold" style="font-size:0.85rem;">${v[2] || 'ไม่ระบุชื่อ'}</div>
+                <div class="small" style="color:var(--main-orange)">เหลือ ${v[16] || 0} ชม.</div>
+                <label class="btn-up">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${v[0]}')"></label>
             </div>`;
         });
         area.innerHTML = html + '</div>';
@@ -134,7 +124,6 @@
 
     function viewTeacherDashboard(tId, tName) {
         const myStudents = allStudents.filter(s => Object.values(s)[19] == tId);
-        document.getElementById('searchBox').style.display = 'none';
         let html = `
             <div class="px-3">
                 <button class="btn btn-sm btn-link text-muted mb-2" onclick="switchPage('teacher')">← กลับ</button>
@@ -145,6 +134,7 @@
                 <div id="teacherStudentList">${renderTeacherStudentItems(myStudents)}</div>
             </div>`;
         document.getElementById('displayArea').innerHTML = html;
+        document.getElementById('searchBox').style.display = 'none';
     }
 
     function renderTeacherStudentItems(students) {
@@ -155,7 +145,7 @@
             html += `<div class="std-item-teacher">
                 <div class="d-flex justify-content-between"><b>${v[2]}</b> <span class="fw-bold" style="color:var(--main-orange)">${v[16]} ชม.</span></div>
                 <div class="small text-muted mb-2">${v[8] || ''} | ${v[14] || ''} ${v[15] || ''}น.</div>
-                <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openCheckInModal('${v[0]}', '${v[2]}')">เช็กชื่อ / บันทึกสอน</button>
+                <button class="btn btn-sm btn-warning w-100 fw-bold" onclick="openCheckInModal('${v[0]}', '${v[2]}', ${v[16]})">เช็กชื่อ / บันทึกสอน</button>
             </div>`;
         });
         return html;
@@ -170,8 +160,8 @@
     function switchPage(p) {
         currentPage = p;
         document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-        const activeNav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
-        if (activeNav) activeNav.classList.add('active');
+        const nav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
+        if(nav) nav.classList.add('active');
         document.getElementById('searchBox').style.display = (p === 'student') ? 'block' : 'none';
         renderDisplay();
     }
@@ -181,17 +171,39 @@
         renderStudentList(allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
 
-    async function openCheckInModal(sId, sName) {
+    // --- ส่วนที่แก้ไข: เพิ่มการแจ้งเตือนเมื่อชั่วโมงเหลือ 2 ---
+    async function openCheckInModal(sId, sName, currentHr) {
         const { value: formValues } = await Swal.fire({
             title: `บันทึกการสอน: ${sName}`,
             html: '<input id="sw-l" class="swal2-input" placeholder="สอนถึงหน้าไหน..."><input id="sw-h" class="swal2-input" placeholder="การบ้าน...">',
             showCancelButton: true, confirmButtonText: 'บันทึก & หัก 1 ชม.', confirmButtonColor: '#ff6600'
         });
+
         if (formValues) {
             Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'checkIn', studentId: sId }) });
-            Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1500 });
-            loadData();
+            
+            try {
+                await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'checkIn', studentId: sId }) });
+                
+                const remainAfter = parseFloat(currentHr) - 1;
+
+                // ถ้าหักแล้วเหลือ <= 2 ให้เด้งเตือนตัวใหญ่ๆ
+                if (remainAfter <= 2) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: '⚠️ ใกล้หมดคอร์ส!',
+                        html: `<h4 class="fw-bold">นักเรียน: ${sName}</h4><hr><h5 class="text-danger">คงเหลือเพียง <b>${remainAfter}</b> ชั่วโมง</h5><p>กรุณาแจ้งนักเรียนเพื่อต่อคอร์ส</p>`,
+                        confirmButtonText: 'รับทราบ',
+                        confirmButtonColor: '#d33'
+                    });
+                } else {
+                    await Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1000 });
+                }
+                
+                loadData(); // โหลดข้อมูลใหม่
+            } catch (e) {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกได้', 'error');
+            }
         }
     }
 
@@ -208,8 +220,8 @@
                 h += '<td>';
                 matches.forEach(m => {
                     const v = Object.values(m);
-                    const teacher = allTeachers.find(tc => Object.values(tc)[0] == v[19]);
-                    h += `<div class="class-box"><b>${v[2]}</b><br><span class="txt-teacher">👤ครู${teacher ? Object.values(teacher)[2] : '?'}</span><br><span style="color:var(--main-orange); font-weight:bold;">⏳เหลือ ${v[16]}</span></div>`;
+                    const tc = allTeachers.find(t => Object.values(t)[0] == v[19]);
+                    h += `<div class="class-box"><b>${v[2]}</b><br><span class="txt-teacher">👤ครู${tc ? Object.values(tc)[2] : '?'}</span><br><span style="color:var(--main-orange); font-weight:bold;">⏳เหลือ ${v[16]}</span></div>`;
                 });
                 h += '</td>';
             });
