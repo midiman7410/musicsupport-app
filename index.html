@@ -89,7 +89,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const appVersion = '0.0.033'; 
+    const appVersion = '0.0.034'; 
     const apiUrl = 'https://script.google.com/macros/s/AKfycby0JWsd9ETsAlt81Aiw66Cb7Jha6c1XRiJjv80XOKVneXqiY0LxT93pgHBY7hwyoCOO/exec';
 
     let allStudents = [];
@@ -98,7 +98,6 @@
 
     function updateVersionDisplay() {
         document.getElementById('ui-version-tag').innerText = `V ${appVersion}`;
-        document.title = `Music Support - Admin V ${appVersion}`;
     }
 
     async function loadData() {
@@ -115,15 +114,6 @@
         }
     }
 
-    function switchPage(page) {
-        currentPage = page;
-        document.getElementById('navStudent').classList.toggle('active', page === 'student');
-        document.getElementById('navTeacher').classList.toggle('active', page === 'teacher');
-        document.getElementById('studentFilter').style.display = (page === 'student') ? 'flex' : 'none';
-        document.getElementById('searchInput').value = '';
-        renderDisplay();
-    }
-
     function renderDisplay(data = null) {
         const listDiv = document.getElementById('displayList');
         let html = '';
@@ -131,11 +121,12 @@
         if (currentPage === 'student') {
             const displayData = data || allStudents;
             displayData.forEach(s => {
-                const keys = Object.keys(s);
-                // ดึงข้อมูลแบบยืดหยุ่น: หาจากชื่อก่อน ถ้าไม่เจอหาตามลำดับ
-                const nick = s['ชื่อเล่น'] || s[keys[2]] || '-';
-                const remain = s['ชั่วโมงคงเหลือ'] || s[keys[16]] || 0;
-                const imgData = s['รูปโปรไฟล์'] || s[keys[18]]; 
+                const vals = Object.values(s);
+                // ดึงข้อมูลตามลำดับคอลัมน์: 0=ID, 1=ชื่อจริง, 2=ชื่อเล่น, 16=ชม.คงเหลือ, 18=รูป
+                const studentId = vals[0] || '-';
+                const nickname = vals[2] || '-';
+                const remain = vals[16] || 0;
+                const imgData = vals[18];
 
                 const profileImg = (imgData && imgData.toString().startsWith('data:image')) 
                                     ? imgData 
@@ -143,58 +134,55 @@
 
                 html += `
                 <div class="data-card">
-                    <div class="btn-edit-tool" onclick="openEdit('${s['รหัสนักเรียน'] || s[keys[0]]}')">⚙️</div>
-                    <div class="name-title">${nick}</div>
+                    <div class="btn-edit-tool" onclick="openEdit('${studentId}')">⚙️</div>
+                    <div class="name-title">${nickname}</div>
                     <div class="photo-slot"><img src="${profileImg}"></div>
                     <div class="info-row"><span>คงเหลือ:</span><span class="text-success fw-bold">${remain} ชม.</span></div>
                     <div class="upload-area">
-                        <label class="upload-label" id="label-${s['รหัสนักเรียน'] || s[keys[0]]}">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${s['รหัสนักเรียน'] || s[keys[0]]}')"></label>
-                        <div class="progress" id="progress-${s['รหัสนักเรียน'] || s[keys[0]]}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%"></div></div>
+                        <label class="upload-label" id="label-${studentId}">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${studentId}')"></label>
+                        <div class="progress" id="progress-${studentId}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%"></div></div>
                     </div>
                 </div>`;
             });
         } else {
             const displayData = data || allTeachers;
             displayData.forEach(t => {
-                const keys = Object.keys(t);
-                const tName = t['ชื่อเล่น'] || t['ชื่อ-นามสกุล'] || t[keys[1]] || '-';
+                const vals = Object.values(t);
+                const tName = vals[2] || vals[1] || '-'; // ชื่อเล่น หรือ ชื่อจริง
                 html += `
                 <div class="data-card">
                     <div class="name-title">${tName}</div>
-                    <div class="badge-teacher">${t['วิชาที่สอน'] || t[keys[2]] || 'ผู้สอน'}</div>
+                    <div class="badge-teacher">${vals[3] || 'ผู้สอน'}</div>
                     <div class="photo-slot"><img src="https://via.placeholder.com/80?text=Teacher"></div>
-                    <div class="info-row"><span>เบอร์โทร:</span><span>${t['เบอร์โทร'] || t[keys[3]] || '-'}</span></div>
+                    <div class="info-row"><span>เบอร์โทร:</span><span>${vals[4] || '-'}</span></div>
                 </div>`;
             });
         }
         listDiv.innerHTML = html || '<div class="text-center w-100 mt-5">ไม่พบข้อมูล</div>';
     }
 
+    // ฟังก์ชันอื่นๆ (ค้นหา, อัปโหลด, แก้ไข)
+    function switchPage(page) {
+        currentPage = page;
+        document.getElementById('navStudent').classList.toggle('active', page === 'student');
+        document.getElementById('navTeacher').classList.toggle('active', page === 'teacher');
+        document.getElementById('studentFilter').style.display = (page === 'student') ? 'flex' : 'none';
+        renderDisplay();
+    }
+
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
         if (currentPage === 'student') {
-            renderDisplay(allStudents.filter(s => {
-                const keys = Object.keys(s);
-                const nick = (s['ชื่อเล่น'] || s[keys[2]] || '').toString().toLowerCase();
-                const full = (s['ชื่อ-นามสกุล'] || s[keys[1]] || '').toString().toLowerCase();
-                return nick.includes(term) || full.includes(term);
-            }));
+            renderDisplay(allStudents.filter(s => Object.values(s).some(v => v.toString().toLowerCase().includes(term))));
         } else {
-            renderDisplay(allTeachers.filter(t => {
-                const keys = Object.keys(t);
-                const nick = (t['ชื่อเล่น'] || t[keys[1]] || '').toString().toLowerCase();
-                return nick.includes(term);
-            }));
+            renderDisplay(allTeachers.filter(t => Object.values(t).some(v => v.toString().toLowerCase().includes(term))));
         }
     }
 
     function filterStudent(sub, btn) {
         document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        renderDisplay(sub === 'all' ? allStudents : allStudents.filter(s => {
-            const keys = Object.keys(s);
-            return (s['วิชาที่ 1'] || s[keys[8]]) === sub;
-        }));
+        renderDisplay(sub === 'all' ? allStudents : allStudents.filter(s => Object.values(s)[8] === sub));
     }
 
     async function handleUpload(input, id) {
@@ -203,33 +191,22 @@
         document.getElementById(`progress-${id}`).style.display = 'flex';
         const base64 = await resizeImage(file, 300);
         try {
-            const res = await fetch(apiUrl, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 })
-            });
+            const res = await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 }) });
             const result = await res.json();
-            if (result.status === 'success') {
-                Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 800, showConfirmButton: false }).then(() => loadData());
-            } else { throw new Error(result.message); }
-        } catch (err) {
-            Swal.fire('ล้มเหลว', 'เชื่อมต่อผิดพลาด', 'error');
-            document.getElementById(`label-${id}`).style.display = 'block';
-            document.getElementById(`progress-${id}`).style.display = 'none';
-        }
+            if (result.status === 'success') { Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 800, showConfirmButton: false }).then(() => loadData()); }
+        } catch (err) { Swal.fire('ล้มเหลว', 'เชื่อมต่อผิดพลาด', 'error'); }
     }
 
     function resizeImage(file, maxWidth) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
+            reader.onload = (e) => {
+                const img = new Image(); img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const scale = maxWidth / img.width;
-                    canvas.width = maxWidth;
-                    canvas.height = img.height * scale;
+                    canvas.width = maxWidth; canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     resolve(canvas.toDataURL('image/jpeg', 0.7));
@@ -239,26 +216,23 @@
     }
 
     function openEdit(id) {
-        const s = allStudents.find(x => {
-            const keys = Object.keys(x);
-            return (x['รหัสนักเรียน'] || x[keys[0]]) == id;
-        });
+        const s = allStudents.find(x => Object.values(x)[0] == id);
         if (!s) return;
-        const keys = Object.keys(s);
-        document.getElementById('editId').value = s['รหัสนักเรียน'] || s[keys[0]];
-        document.getElementById('editNick').value = s['ชื่อเล่น'] || s[keys[2]] || '';
-        document.getElementById('editFull').value = s['ชื่อ-นามสกุล'] || s[keys[1]] || '';
-        document.getElementById('editSubject').value = s['วิชาที่ 1'] || s[keys[8]] || '';
-        document.getElementById('editRemain').value = s['ชั่วโมงคงเหลือ'] || s[keys[16]] || 0;
-        document.getElementById('editLeave').value = s['จำนวนครั้งที่ลา'] || s[keys[17]] || 0;
+        const v = Object.values(s);
+        document.getElementById('editId').value = v[0];
+        document.getElementById('editNick').value = v[2] || '';
+        document.getElementById('editFull').value = v[1] || '';
+        document.getElementById('editSubject').value = v[8] || '';
+        document.getElementById('editRemain').value = v[16] || 0;
+        document.getElementById('editLeave').value = v[17] || 0;
         new bootstrap.Modal(document.getElementById('editModal')).show();
     }
 
     async function saveEdit() {
-        const btn = document.getElementById('saveBtn'); btn.disabled = true; btn.innerText = '⏳...';
+        const btn = document.getElementById('saveBtn'); btn.disabled = true;
         const payload = {
             action: 'updateStudent',
-            studentId: document.getElementById('editId').value.toString(),
+            studentId: document.getElementById('editId').value,
             nickname: document.getElementById('editNick').value,
             fullName: document.getElementById('editFull').value,
             subject: document.getElementById('editSubject').value,
@@ -266,15 +240,9 @@
             leave: document.getElementById('editLeave').value
         };
         try {
-            const res = await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await res.json();
-            if(result.status === 'success') {
-                Swal.fire('สำเร็จ', 'อัปเดตแล้ว', 'success').then(() => location.reload());
-            } else { throw new Error(result.message); }
-        } catch (e) {
-            Swal.fire('Error', e.message, 'error');
-            btn.disabled = false; btn.innerText = 'บันทึกข้อมูล';
-        }
+            await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) });
+            Swal.fire('สำเร็จ', 'อัปเดตแล้ว', 'success').then(() => location.reload());
+        } catch (e) { Swal.fire('Error', 'ผิดพลาด', 'error'); btn.disabled = false; }
     }
 
     loadData();
