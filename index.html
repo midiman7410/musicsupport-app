@@ -3,61 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Support - Student Info</title>
+    <title>Music Support - ข้อมูลนักเรียน</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { background: #f8f9fa; padding: 20px; font-family: 'Sarabun', sans-serif; }
-        .student-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; }
-        .header-title { font-weight: bold; color: #333; margin-bottom: 25px; text-align: center; }
-        .modal-content { border-radius: 15px; border: none; }
-        .info-label { font-weight: bold; color: #555; }
+        body { background: #f0f2f5; padding: 20px; font-family: 'Sarabun', sans-serif; }
+        .student-card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: none; transition: 0.3s; }
+        .student-card:hover { transform: translateY(-3px); }
+        .header-title { font-weight: bold; color: #1a1a1a; margin-bottom: 30px; text-align: center; }
+        .btn-info-custom { background: #007bff; color: white; border-radius: 8px; font-weight: 600; padding: 6px 15px; border: none; }
+        .btn-info-custom:hover { background: #0056b3; color: white; }
+        /* สไตล์ใน Modal */
+        .modal-content { border-radius: 20px; border: none; }
+        .detail-item { padding: 10px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .detail-item:last-child { border-bottom: none; }
+        .label { font-weight: bold; color: #666; }
+        .value { color: #333; font-weight: 600; }
+        .highlight-blue { color: #007bff; font-size: 1.2rem; }
+        .highlight-red { color: #dc3545; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 class="header-title">🎸 ข้อมูลนักเรียนทั้งหมด</h2>
+        <h2 class="header-title">🎸 รายชื่อนักเรียนทั้งหมด</h2>
         <div id="studentList" class="text-center">กำลังโหลดข้อมูล...</div>
     </div>
 
     <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">📄 รายละเอียดนักเรียน</h5>
+                <div class="modal-header border-0">
+                    <h5 class="modal-title w-100 text-center font-weight-bold">📄 ข้อมูลนักเรียน</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="modalBody">
+                <div class="modal-body px-4" id="modalBody">
                     </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const apiUrl = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsl7CXi5cG9FZhvp03kr6JHdv8iAZhZ_6-7o/exec';
-        let allStudents = [];
+        // ใช้ URL เดิมที่คุณ Deploy สำเร็จแล้ว
+        const apiUrl = 'https://script.google.com/macros/s/AKfycbxBVV0MjFxERUNBzJi5rOjuO3RBG1IqhStQq1yMld-1oCGPfbd9dz4vTjZIQjsuUd0Z/exec';
+        let studentData = [];
 
         async function loadData() {
             const studentListDiv = document.getElementById('studentList');
             try {
                 const response = await fetch(apiUrl, { method: 'GET', redirect: 'follow' });
                 const fullData = await response.json();
-                allStudents = fullData.students; 
+                studentData = fullData.students; 
                 
-                if (!allStudents || allStudents.length === 0) {
+                if (!studentData || studentData.length === 0) {
                     studentListDiv.innerHTML = '<p>ไม่พบข้อมูลนักเรียน</p>';
                     return;
                 }
 
                 let html = '';
-                allStudents.forEach((s, index) => {
+                studentData.forEach((s, index) => {
                     html += `
                         <div class="student-card d-flex justify-content-between align-items-center">
                             <div class="text-start">
                                 <h5 class="mb-0" style="font-weight: 600;">${s['ชื่อเล่น'] || 'ไม่ระบุชื่อ'}</h5>
-                                <small class="text-muted">รหัส: ${s['รหัสนักเรียน'] || '-'}</small>
+                                <small class="text-muted">ID: ${s['รหัสนักเรียน'] || '-'}</small>
                             </div>
-                            <button class="btn btn-info btn-sm text-white" onclick="showDetail(${index})">ดูข้อมูล</button>
+                            <button class="btn btn-info-custom btn-sm" onclick="showInfo(${index})">ดูข้อมูล</button>
                         </div>`;
                 });
                 studentListDiv.innerHTML = html;
@@ -66,17 +80,22 @@
             }
         }
 
-        function showDetail(index) {
-            const s = allStudents[index];
+        function showInfo(index) {
+            const s = studentData[index];
             const modalBody = document.getElementById('modalBody');
             
             modalBody.innerHTML = `
-                <div class="mb-2"><span class="info-label">ชื่อเล่น:</span> ${s['ชื่อเล่น'] || '-'}</div>
-                <div class="mb-2"><span class="info-label">ชื่อเต็ม:</span> ${s['ชื่อ-นามสกุล'] || '-'}</div>
-                <div class="mb-2"><span class="info-label">วิชา:</span> ${s['วิชา'] || '-'}</div>
-                <hr>
-                <div class="mb-2 text-primary"><span class="info-label">ชม. คงเหลือ:</span> ${s['ชั่วโมงคงเหลือ'] || '0'} ชม.</div>
-                <div class="mb-2 text-danger"><span class="info-label">ลาไปแล้ว:</span> ${s['จำนวนการลา'] || '0'} ครั้ง</div>
+                <div class="detail-item"><span class="label">ชื่อเล่น:</span> <span class="value">${s['ชื่อเล่น'] || '-'}</span></div>
+                <div class="detail-item"><span class="label">ชื่อเต็ม:</span> <span class="value">${s['ชื่อ-นามสกุล'] || '-'}</span></div>
+                <div class="detail-item"><span class="label">วิชา:</span> <span class="value">${s['วิชาที่ 1'] || '-'}</span></div>
+                <div class="detail-item mt-3">
+                    <span class="label">ชม. คงเหลือ:</span> 
+                    <span class="value highlight-blue">${s['ชั่วโมงคงเหลือ'] || '0'} ชม.</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">ลาไปแล้ว:</span> 
+                    <span class="value highlight-red">${s['จำนวนครั้งที่ลา'] || '0'} ครั้ง</span>
+                </div>
             `;
             
             const myModal = new bootstrap.Modal(document.getElementById('infoModal'));
