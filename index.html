@@ -3,32 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Grid Table V 0.0.065</title>
+    <title>Music Admin - Full Info Grid V 0.0.066</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --main-orange: #ff6600; --table-border: #dee2e6; }
+        :root { --main-orange: #ff6600; --table-border: #dee2e6; --teacher-color: #007bff; }
         body { background: #fdfdfd; padding: 10px; font-family: 'Sarabun', sans-serif; padding-bottom: 60px; }
         
-        .v-badge { position: fixed; top: 10px; right: 10px; background: var(--main-orange); color: white; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; z-index: 9999; font-weight: bold; }
+        .v-badge { position: fixed; top: 10px; right: 10px; background: var(--main-orange); color: white; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; z-index: 9999; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         .nav-pills { justify-content: center; background: #eee; border-radius: 50px; padding: 5px; margin: 15px 0; }
         .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.9rem; }
         .nav-link.active { background-color: var(--main-orange) !important; color: white !important; }
 
-        /* --- New Grid Table Style --- */
+        /* --- Full Info Grid Table --- */
         .table-responsive { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--table-border); }
-        .table-timetable { margin-bottom: 0; min-width: 800px; table-layout: fixed; }
-        .table-timetable th, .table-timetable td { border: 1px solid var(--table-border); padding: 8px; vertical-align: top; text-align: center; }
+        .table-timetable { margin-bottom: 0; min-width: 900px; table-layout: fixed; }
+        .table-timetable th, .table-timetable td { border: 1px solid var(--table-border); padding: 6px; vertical-align: top; text-align: center; }
         
-        .th-day { width: 100px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; }
-        .th-time { background: var(--main-orange) !important; color: white !important; font-size: 0.8rem; height: 50px; vertical-align: middle !important; }
+        .th-day { width: 90px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; vertical-align: middle !important; }
+        .th-time { background: var(--main-orange) !important; color: white !important; font-size: 0.8rem; height: 45px; vertical-align: middle !important; }
         
-        .class-box { background: #fff; border: 1px solid #ffccaa; border-radius: 6px; padding: 4px; margin-bottom: 4px; text-align: left; }
+        .class-box { background: #fff; border: 1px solid #ffccaa; border-left: 3px solid var(--main-orange); border-radius: 6px; padding: 5px; margin-bottom: 5px; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .std-name-grid { font-weight: bold; font-size: 0.85rem; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .inst-tag { font-size: 0.7rem; color: #777; display: block; }
-        .rem-tag { font-size: 0.7rem; color: #ff6600; font-weight: bold; border-top: 1px solid #ffe5d4; margin-top: 2px; padding-top: 2px; }
+        .inst-info { font-size: 0.7rem; color: #666; display: block; margin-top: 1px; }
+        .teacher-info { font-size: 0.7rem; color: var(--teacher-color); font-weight: 600; display: block; margin-top: 1px; border-top: 1px dashed #eee; padding-top: 1px; }
+        .rem-tag-grid { font-size: 0.65rem; color: #ff6600; font-weight: bold; text-align: right; display: block; margin-top: 2px; }
 
         /* Student Grid */
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
@@ -39,7 +40,7 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.065</div>
+<div class="v-badge">V 0.0.066</div>
 
 <div class="container-fluid">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -50,7 +51,7 @@
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
 
-    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อ..." onkeyup="handleSearch()" style="border-radius: 20px;"></div>
+    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control shadow-sm" placeholder="🔍 ค้นหาชื่อ..." onkeyup="handleSearch()" style="border-radius: 20px;"></div>
     
     <div id="displayArea"></div>
 </div>
@@ -75,7 +76,7 @@
         area.innerHTML = '';
 
         if (currentPage === 'schedule') {
-            renderGridTable(area);
+            renderFullInfoTable(area);
             return;
         }
 
@@ -87,8 +88,8 @@
                 html += `<div class="std-card">
                     <div class="std-photo">${img}</div>
                     <div class="fw-bold" style="font-size:0.85rem;">${v[2]}</div>
-                    <div class="small text-muted mb-1">${v[16] || 0} ชม.</div>
-                    <label class="btn btn-outline-warning btn-sm w-100" style="font-size:0.65rem;">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${v[0]}')"></label>
+                    <div class="small text-muted mb-1">เหลือ ${v[16] || 0} ชม.</div>
+                    <label class="btn btn-outline-warning btn-sm w-100" style="font-size:0.65rem;">📷 รูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${v[0]}')"></label>
                 </div>`;
             } else {
                 html += `<div class="std-card"><b>${v[2]}</b></div>`;
@@ -97,13 +98,12 @@
         area.innerHTML = html + '</div>';
     }
 
-    function renderGridTable(container) {
-        // กำหนดช่วงเวลา (สามารถปรับเพิ่ม/ลดตามเวลาเรียนจริงของโรงเรียน)
+    function renderFullInfoTable(container) {
         const timeSlots = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
         const days = ['จันทร์', 'อังคาร', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
 
         let html = `
-        <div class="text-muted small mb-2">* เลื่อนตารางไปทางซ้าย-ขวาเพื่อดูเวลาเพิ่มเติม</div>
+        <div class="text-muted small mb-2">* เลื่อนซ้าย-ขวา เพื่อดูเวลาเรียนทั้งหมด</div>
         <div class="table-responsive">
             <table class="table table-timetable">
                 <thead>
@@ -117,22 +117,24 @@
         days.forEach(day => {
             html += `<tr><td class="th-day">วัน${day}</td>`;
             timeSlots.forEach(slot => {
-                // กรองหานักเรียนที่เรียนวันนี้ และมีเวลาเรียนที่ "ขึ้นต้นด้วย" เลขชั่วโมงนี้
                 const matches = allStudents.filter(s => {
                     const v = Object.values(s);
-                    const dayMatch = (v[14] || "").includes(day);
-                    const timeMatch = (v[15] || "").startsWith(slot.split(':')[0]);
-                    return dayMatch && timeMatch;
+                    return (v[14] || "").includes(day) && (v[15] || "").startsWith(slot.split(':')[0]);
                 });
 
                 html += `<td>`;
                 matches.forEach(m => {
                     const v = Object.values(m);
+                    // ค้นหาชื่อครูจากรหัสครู (คอลัมน์ T หรือดัชนีที่ 19 ในชีทนักเรียน)
+                    const teacher = allTeachers.find(tc => Object.values(tc)[0] == v[19]);
+                    const teacherName = teacher ? Object.values(teacher)[2] : 'ไม่ระบุครู';
+                    
                     html += `
                     <div class="class-box">
                         <span class="std-name-grid">${v[2]}</span>
-                        <span class="inst-tag">${v[8] || ''}</span>
-                        <div class="rem-tag">เหลือ ${v[16] || 0}</div>
+                        <span class="inst-info">🎸 ${v[8] || ''}</span>
+                        <span class="teacher-info">👤 ครู${teacherName}</span>
+                        <span class="rem-tag-grid">เหลือ ${v[16] || 0}</span>
                     </div>`;
                 });
                 html += `</td>`;
