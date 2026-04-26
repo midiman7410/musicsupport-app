@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Support - Admin V 0.0.041</title>
+    <title>Music Support - Admin V 0.0.042</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -14,14 +14,18 @@
         .nav-link { border-radius: 25px !important; color: #666; font-weight: 600; cursor: pointer; border: none; background: none; font-size: 0.9rem; }
         .nav-link.active { background-color: #007bff !important; color: white !important; box-shadow: 0 4px 10px rgba(0,123,255,0.3); }
         
-        .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .data-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; min-height: 290px; display: flex; flex-direction: column; justify-content: space-between; }
+        .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 15px; }
+        .data-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; min-height: 310px; display: flex; flex-direction: column; }
         .btn-edit-tool { position: absolute; top: 10px; right: 10px; background: #f8f9fa; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; cursor: pointer; z-index: 10; }
         .name-title { font-size: 1.1rem; font-weight: 600; color: #1a1a1a; margin-top: 5px; margin-bottom: 8px; }
         .photo-slot { width: 85px; height: 85px; background: #f0f0f0; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* สไตล์ตารางเรียน */
+        /* ข้อมูลคงเหลือและนัดหมาย */
+        .info-row { font-size: 0.8rem; margin: 4px 0; display: flex; justify-content: space-between; padding: 0 5px; color: #444; border-top: 1px solid #f8f9fa; padding-top: 8px; }
+        .remain-tag { color: #28a745; font-weight: bold; }
+        .schedule-tag { font-size: 0.75rem; color: #007bff; margin-bottom: 10px; font-weight: 600; }
+
         .schedule-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .day-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .day-header { padding: 10px; font-weight: bold; text-align: center; color: white; }
@@ -30,15 +34,15 @@
         .class-item { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
         .class-time { font-weight: bold; color: #007bff; min-width: 80px; }
 
-        .upload-area { margin-top: 10px; }
-        .upload-label { display: block; font-size: 0.75rem; color: #007bff; cursor: pointer; border: 1px dashed #007bff; border-radius: 12px; padding: 8px; background: #f0f7ff; }
+        .upload-area { margin-top: auto; padding-top: 10px; }
+        .upload-label { display: block; font-size: 0.75rem; color: #007bff; cursor: pointer; border: 1px dashed #007bff; border-radius: 12px; padding: 6px; background: #f0f7ff; }
         .progress { height: 8px; margin-top: 5px; display: none; border-radius: 10px; }
         .version-tag { position: fixed; bottom: 10px; right: 15px; background: rgba(0,0,0,0.6); color: #fff; padding: 3px 12px; border-radius: 20px; font-size: 0.7rem; z-index: 9999; }
     </style>
 </head>
 <body>
 
-<div class="version-tag">V 0.0.041</div>
+<div class="version-tag">V 0.0.042</div>
 
 <div class="container">
     <h2 class="header-title">🎸 Music Support Admin</h2>
@@ -48,13 +52,8 @@
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
 
-    <div id="searchBox" class="mb-4">
-        <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อเล่น..." onkeyup="handleSearch()" style="border-radius: 25px;">
-    </div>
-
-    <div id="displayArea">
-        <div class="text-center mt-5">กำลังโหลดข้อมูล...</div>
-    </div>
+    <div id="searchBox" class="mb-4"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อ..." onkeyup="handleSearch()" style="border-radius: 25px;"></div>
+    <div id="displayArea"></div>
 </div>
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
@@ -63,15 +62,15 @@
             <div class="modal-header border-0"><h5>📝 แก้ไขข้อมูล</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <input type="hidden" id="editId">
-                <div class="mb-3"><label class="small text-muted">ชื่อเล่น</label><input type="text" id="editNick" class="form-control"></div>
+                <div class="mb-2"><label class="small text-muted">ชื่อเล่น</label><input type="text" id="editNick" class="form-control"></div>
                 <div class="row">
-                    <div class="col-6 mb-3"><label class="small text-muted">วันเรียน (O)</label><input type="text" id="editDay" class="form-control" placeholder="เช่น จันทร์"></div>
-                    <div class="col-6 mb-3"><label class="small text-muted">เวลาเรียน (P)</label><input type="text" id="editTime" class="form-control" placeholder="10:00"></div>
+                    <div class="col-6 mb-2"><label class="small text-muted">วันเรียน (O)</label><input type="text" id="editDay" class="form-control" placeholder="เช่น จันทร์"></div>
+                    <div class="col-6 mb-2"><label class="small text-muted">เวลาเรียน (P)</label><input type="text" id="editTime" class="form-control" placeholder="10:00"></div>
                 </div>
-                <div class="mb-3"><label class="small text-muted">รหัสครูผู้สอน (คอลัมน์ T)</label><input type="text" id="editTeacherCode" class="form-control"></div>
+                <div class="mb-2"><label class="small text-muted">รหัสครู (T)</label><input type="text" id="editTeacherCode" class="form-control"></div>
                 <div class="row">
-                    <div class="col-6 mb-3"><label class="small text-muted">ชม. คงเหลือ</label><input type="number" id="editRemain" class="form-control"></div>
-                    <div class="col-6 mb-3"><label class="small text-muted">วิชา</label><input type="text" id="editSubject" class="form-control"></div>
+                    <div class="col-6 mb-2"><label class="small text-muted">ชม. คงเหลือ</label><input type="number" id="editRemain" class="form-control"></div>
+                    <div class="col-6 mb-2"><label class="small text-muted">วิชา</label><input type="text" id="editSubject" class="form-control"></div>
                 </div>
             </div>
             <div class="modal-footer border-0"><button type="button" id="saveBtn" class="btn btn-primary w-100" onclick="saveEdit()" style="border-radius: 12px;">บันทึก</button></div>
@@ -93,35 +92,24 @@
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
             renderDisplay();
-        } catch (e) { document.getElementById('displayArea').innerHTML = '<div class="text-center mt-5">เกิดข้อผิดพลาดในการโหลด</div>'; }
-    }
-
-    function switchPage(page) {
-        currentPage = page;
-        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
-        document.getElementById('searchBox').style.display = (page === 'schedule') ? 'none' : 'block';
-        renderDisplay();
+        } catch (e) { document.getElementById('displayArea').innerHTML = 'เกิดข้อผิดพลาด'; }
     }
 
     function renderDisplay(data = null) {
         const area = document.getElementById('displayArea');
         const listData = data || (currentPage === 'student' ? allStudents : allTeachers);
-        
         if (currentPage === 'student') {
             let html = '<div class="main-grid">';
             listData.forEach(s => {
                 const v = Object.values(s);
                 const id = v[0];
                 const profileImg = (s['รูปโปรไฟล์'] && s['รูปโปรไฟล์'].startsWith('data:image')) ? s['รูปโปรไฟล์'] : 'https://via.placeholder.com/85?text=👤';
-
                 html += `<div class="data-card">
                     <div class="btn-edit-tool" onclick="openEdit('${id}')">⚙️</div>
-                    <div>
-                        <div class="name-title">${s['ชื่อเล่น'] || v[2]}</div>
-                        <div class="photo-slot"><img src="${profileImg}"></div>
-                        <div style="font-size:0.75rem; color:#007bff;">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
-                    </div>
+                    <div class="name-title">${s['ชื่อเล่น'] || v[2]}</div>
+                    <div class="photo-slot"><img src="${profileImg}"></div>
+                    <div class="schedule-tag">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
+                    <div class="info-row"><span>ชม. คงเหลือ:</span><span class="remain-tag">${v[16] || 0} ชม.</span></div>
                     <div class="upload-area">
                         <label class="upload-label" id="label-${id}">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
                         <div class="progress" id="progress-${id}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%"></div></div>
@@ -131,83 +119,32 @@
             area.innerHTML = html + '</div>';
         } else if (currentPage === 'teacher') {
             let html = '<div class="main-grid">';
-            listData.forEach(t => {
-                const v = Object.values(t);
-                html += `<div class="data-card" style="min-height:120px; justify-content:center;">
-                    <div class="name-title">${t['ชื่อเล่น'] || v[2]}</div>
-                    <div style="font-size:0.75rem; color:#666;">ID: ${v[0]}</div>
-                </div>`;
-            });
+            listData.forEach(t => { const v = Object.values(t); html += `<div class="data-card" style="min-height:120px; justify-content:center;"><div class="name-title">${t['ชื่อเล่น'] || v[2]}</div><div class="small text-muted">ID: ${v[0]}</div></div>`; });
             area.innerHTML = html + '</div>';
-        } else if (currentPage === 'schedule') {
-            renderSchedule();
-        }
+        } else if (currentPage === 'schedule') { renderSchedule(); }
     }
 
     function renderSchedule() {
         const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
-        const dayClasses = { 'จันทร์': 'day-mon', 'อังคาร': 'day-tue', 'พุธ': 'day-wed', 'พฤหัสบดี': 'day-thu', 'ศุกร์': 'day-fri', 'เสาร์': 'day-sat', 'อาทิตย์': 'day-sun' };
+        const dClasses = { 'จันทร์': 'day-mon', 'อังคาร': 'day-tue', 'พุธ': 'day-wed', 'พฤหัสบดี': 'day-thu', 'ศุกร์': 'day-fri', 'เสาร์': 'day-sat', 'อาทิตย์': 'day-sun' };
         let html = '<div class="schedule-container">';
-        days.forEach(dayName => {
-            const studentsInDay = allStudents.filter(s => (s['หมายเหตุ'] || Object.values(s)[14] || "").toString().includes(dayName));
-            studentsInDay.sort((a, b) => (Object.values(a)[15] || "").toString().localeCompare((Object.values(b)[15] || "").toString()));
-            html += `<div class="day-card">
-                <div class="day-header ${dayClasses[dayName]}">${dayName}</div>
-                <div class="day-body">
-                    ${studentsInDay.length > 0 ? studentsInDay.map(s => {
-                        const v = Object.values(s);
-                        const teacher = allTeachers.find(t => Object.values(t)[0] == v[19]);
-                        return `<div class="class-item d-flex">
-                            <div class="class-time">${v[15] || '--:--'}</div>
-                            <div><strong>${s['ชื่อเล่น'] || v[2]}</strong><div style="font-size:0.7rem; color:#666;">🎸 ${v[8] || 'วิชา'} - ครู${teacher ? (teacher['ชื่อเล่น'] || Object.values(teacher)[2]) : "ไม่ระบุ"}</div></div>
-                        </div>`;
-                    }).join('') : '<div class="p-3 text-muted text-center small">ไม่มีสอน</div>'}
-                </div>
-            </div>`;
+        days.forEach(d => {
+            const ss = allStudents.filter(s => (s['หมายเหตุ'] || Object.values(s)[14] || "").toString().includes(d));
+            ss.sort((a, b) => (Object.values(a)[15] || "").toString().localeCompare((Object.values(b)[15] || "").toString()));
+            html += `<div class="day-card"><div class="day-header ${dClasses[d]}">${d}</div><div class="day-body">
+                ${ss.length > 0 ? ss.map(s => {
+                    const v = Object.values(s); const t = allTeachers.find(x => Object.values(x)[0] == v[19]);
+                    return `<div class="class-item d-flex"><div class="class-time">${v[15] || '--:--'}</div><div><strong>${s['ชื่อเล่น'] || v[2]}</strong><div style="font-size:0.7rem; color:#666;">🎸 ${v[8] || 'วิชา'} - ครู${t ? (t['ชื่อเล่น'] || Object.values(t)[2]) : "ไม่ระบุ"}</div></div></div>`;
+                }).join('') : '<div class="p-3 text-muted text-center small">ไม่มีสอน</div>'}</div></div>`;
         });
         document.getElementById('displayArea').innerHTML = html + '</div>';
     }
 
-    function openEdit(id) {
-        const s = allStudents.find(x => Object.values(x)[0] == id);
-        if (!s) return;
-        const v = Object.values(s);
-        document.getElementById('editId').value = v[0];
-        document.getElementById('editNick').value = s['ชื่อเล่น'] || v[2] || "";
-        document.getElementById('editDay').value = s['หมายเหตุ'] || v[14] || "";
-        document.getElementById('editTime').value = s['วันหมดอายุ'] || v[15] || "";
-        document.getElementById('editTeacherCode').value = v[19] || "";
-        document.getElementById('editRemain').value = s['ชั่วโมงคงเหลือ'] || v[16] || 0;
-        document.getElementById('editSubject').value = s['วิชาที่ 1'] || v[8] || "";
-        new bootstrap.Modal(document.getElementById('editModal')).show();
-    }
-
-    async function saveEdit() {
-        const btn = document.getElementById('saveBtn'); btn.disabled = true;
-        const payload = { action: 'updateStudent', studentId: document.getElementById('editId').value, nickname: document.getElementById('editNick').value, day: document.getElementById('editDay').value, time: document.getElementById('editTime').value, teacherCode: document.getElementById('editTeacherCode').value, remain: document.getElementById('editRemain').value, subject: document.getElementById('editSubject').value };
-        try { await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) }); location.reload(); } catch (e) { btn.disabled = false; }
-    }
-
-    async function handleUpload(input, id) {
-        const file = input.files[0]; if (!file) return;
-        document.getElementById(`label-${id}`).style.display = 'none';
-        document.getElementById(`progress-${id}`).style.display = 'flex';
-        const reader = new FileReader(); reader.readAsDataURL(file);
-        reader.onload = async (e) => {
-            const img = new Image(); img.src = e.target.result;
-            img.onload = async () => {
-                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                canvas.width = 300; canvas.height = img.height * (300/img.width); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                try { await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: canvas.toDataURL('image/jpeg', 0.8) }) }); loadData(); } catch (err) { Swal.fire('Error', 'ลองใหม่', 'error'); }
-            };
-        };
-    }
-
-    function handleSearch() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        renderDisplay((currentPage === 'student' ? allStudents : allTeachers).filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
-    }
-
+    function switchPage(p) { currentPage = p; document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active')); document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('active'); document.getElementById('searchBox').style.display = (p === 'schedule') ? 'none' : 'block'; renderDisplay(); }
+    function openEdit(id) { const s = allStudents.find(x => Object.values(x)[0] == id); if (!s) return; const v = Object.values(s); document.getElementById('editId').value = v[0]; document.getElementById('editNick').value = s['ชื่อเล่น'] || v[2]; document.getElementById('editDay').value = v[14] || ""; document.getElementById('editTime').value = v[15] || ""; document.getElementById('editTeacherCode').value = v[19] || ""; document.getElementById('editRemain').value = v[16] || 0; document.getElementById('editSubject').value = v[8] || ""; new bootstrap.Modal(document.getElementById('editModal')).show(); }
+    async function saveEdit() { const btn = document.getElementById('saveBtn'); btn.disabled = true; const p = { action: 'updateStudent', studentId: document.getElementById('editId').value, nickname: document.getElementById('editNick').value, day: document.getElementById('editDay').value, time: document.getElementById('editTime').value, teacherCode: document.getElementById('editTeacherCode').value, remain: document.getElementById('editRemain').value, subject: document.getElementById('editSubject').value }; try { await fetch(apiUrl, { method: 'POST', body: JSON.stringify(p) }); location.reload(); } catch (e) { btn.disabled = false; } }
+    async function handleUpload(input, id) { const file = input.files[0]; if (!file) return; document.getElementById(`label-${id}`).style.display = 'none'; document.getElementById(`progress-${id}`).style.display = 'flex'; const r = new FileReader(); r.readAsDataURL(file); r.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = async () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 300; canvas.height = img.height * (300/img.width); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); try { await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: canvas.toDataURL('image/jpeg', 0.8) }) }); loadData(); } catch (err) { Swal.fire('Error', 'ลองใหม่', 'error'); } }; }; }
+    function handleSearch() { const term = document.getElementById('searchInput').value.toLowerCase(); renderDisplay((currentPage === 'student' ? allStudents : allTeachers).filter(s => Object.values(s).join(' ').toLowerCase().includes(term))); }
     loadData();
 </script>
 </body>
