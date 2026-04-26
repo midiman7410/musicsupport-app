@@ -3,61 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Pro Schedule V 0.0.064</title>
+    <title>Music Admin - Grid Table V 0.0.065</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --main-orange: #ff6600; --soft-orange: #fff8f2; --text-dark: #2d3436; }
-        body { background: #f4f7f6; padding: 10px; font-family: 'Sarabun', sans-serif; padding-bottom: 60px; color: var(--text-dark); }
+        :root { --main-orange: #ff6600; --table-border: #dee2e6; }
+        body { background: #fdfdfd; padding: 10px; font-family: 'Sarabun', sans-serif; padding-bottom: 60px; }
         
-        .v-badge { position: fixed; top: 10px; right: 10px; background: var(--main-orange); color: white; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; z-index: 9999; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .v-badge { position: fixed; top: 10px; right: 10px; background: var(--main-orange); color: white; padding: 2px 12px; border-radius: 20px; font-size: 0.7rem; z-index: 9999; font-weight: bold; }
 
-        .nav-pills { justify-content: center; background: #e0e0e0; border-radius: 50px; padding: 5px; margin: 15px 0; }
+        .nav-pills { justify-content: center; background: #eee; border-radius: 50px; padding: 5px; margin: 15px 0; }
         .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.9rem; }
         .nav-link.active { background-color: var(--main-orange) !important; color: white !important; }
 
-        /* --- Optimized Schedule Layout --- */
-        .day-section { margin-bottom: 30px; }
-        .day-label-main { 
-            font-size: 1.4rem; font-weight: bold; color: var(--main-orange); 
-            display: flex; align-items: center; margin-bottom: 15px;
-            border-left: 5px solid var(--main-orange); padding-left: 12px;
-        }
-
-        .time-group { margin-bottom: 10px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
-        .time-header { background: #fdf2e9; padding: 5px 15px; font-weight: bold; color: #d35400; font-size: 0.9rem; border-bottom: 1px solid #fce5d2; }
+        /* --- New Grid Table Style --- */
+        .table-responsive { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--table-border); }
+        .table-timetable { margin-bottom: 0; min-width: 800px; table-layout: fixed; }
+        .table-timetable th, .table-timetable td { border: 1px solid var(--table-border); padding: 8px; vertical-align: top; text-align: center; }
         
-        .class-entry { display: flex; padding: 12px 15px; border-bottom: 1px dashed #eee; align-items: center; }
-        .class-entry:last-child { border-bottom: none; }
+        .th-day { width: 100px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; }
+        .th-time { background: var(--main-orange) !important; color: white !important; font-size: 0.8rem; height: 50px; vertical-align: middle !important; }
         
-        .info-core { flex-grow: 1; }
-        .name-row { font-weight: 600; font-size: 1.1rem; color: #2d3436; display: flex; align-items: center; justify-content: space-between; }
-        .sub-row { font-size: 0.85rem; color: #636e72; margin-top: 2px; }
-        .teacher-tag { color: var(--main-orange); font-weight: 600; background: #fff; border: 1px solid var(--main-orange); padding: 0 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px; }
-
-        .remain-circle { 
-            min-width: 45px; height: 45px; border-radius: 50%; 
-            background: var(--main-orange); color: white; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            margin-left: 15px; box-shadow: 0 3px 6px rgba(255,102,0,0.2);
-        }
-        .rem-n { font-weight: bold; font-size: 1.1rem; line-height: 1; }
-        .rem-u { font-size: 0.5rem; }
+        .class-box { background: #fff; border: 1px solid #ffccaa; border-radius: 6px; padding: 4px; margin-bottom: 4px; text-align: left; }
+        .std-name-grid { font-weight: bold; font-size: 0.85rem; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inst-tag { font-size: 0.7rem; color: #777; display: block; }
+        .rem-tag { font-size: 0.7rem; color: #ff6600; font-weight: bold; border-top: 1px solid #ffe5d4; margin-top: 2px; padding-top: 2px; }
 
         /* Student Grid */
-        .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .std-card { background: white; border-radius: 15px; padding: 15px; text-align: center; border: 1px solid #eee; transition: 0.2s; }
-        .std-photo { width: 70px; height: 70px; background: #f0f2f5; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .std-card { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #eee; }
+        .std-photo { width: 60px; height: 60px; background: #eee; border-radius: 50%; margin: 0 auto 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .std-photo img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
 
-<div class="v-badge">V 0.0.064</div>
+<div class="v-badge">V 0.0.065</div>
 
 <div class="container-fluid">
-    <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange); letter-spacing: 1px;">MUSIC SCHOOL ADMIN</h3>
+    <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
     
     <ul class="nav nav-pills nav-fill">
         <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
@@ -65,7 +50,7 @@
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
 
-    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control shadow-sm" placeholder="🔍 ค้นหาชื่อนักเรียน..." onkeyup="handleSearch()" style="border-radius: 20px; border: none; padding: 10px 20px;"></div>
+    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อ..." onkeyup="handleSearch()" style="border-radius: 20px;"></div>
     
     <div id="displayArea"></div>
 </div>
@@ -90,72 +75,73 @@
         area.innerHTML = '';
 
         if (currentPage === 'schedule') {
-            renderScheduleOptimized(area);
+            renderGridTable(area);
             return;
         }
 
         let html = '<div class="main-grid">';
         listData.forEach(item => {
-            const v = Object.values(item); const id = v[0];
+            const v = Object.values(item);
             if (currentPage === 'student') {
                 const img = v[18] && v[18].toString().startsWith('data:image') ? `<img src="${v[18]}">` : '👤';
                 html += `<div class="std-card">
                     <div class="std-photo">${img}</div>
-                    <div class="fw-bold" style="font-size:1rem; color:#2d3436;">${v[2]}</div>
-                    <div class="small text-muted mb-2">คงเหลือ ${v[16] || 0} ชม.</div>
-                    <label class="btn btn-sm w-100" style="background:#fff3e0; color:#e67e22; border-radius:8px; font-weight:600; font-size:0.75rem;">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
+                    <div class="fw-bold" style="font-size:0.85rem;">${v[2]}</div>
+                    <div class="small text-muted mb-1">${v[16] || 0} ชม.</div>
+                    <label class="btn btn-outline-warning btn-sm w-100" style="font-size:0.65rem;">📷 อัปรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${v[0]}')"></label>
                 </div>`;
             } else {
-                html += `<div class="std-card"><b>${v[2]}</b><br><small class="text-muted">ID: ${id}</small></div>`;
+                html += `<div class="std-card"><b>${v[2]}</b></div>`;
             }
         });
         area.innerHTML = html + '</div>';
     }
 
-    function renderScheduleOptimized(container) {
+    function renderGridTable(container) {
+        // กำหนดช่วงเวลา (สามารถปรับเพิ่ม/ลดตามเวลาเรียนจริงของโรงเรียน)
+        const timeSlots = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
         const days = ['จันทร์', 'อังคาร', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
-        let fullHtml = '';
+
+        let html = `
+        <div class="text-muted small mb-2">* เลื่อนตารางไปทางซ้าย-ขวาเพื่อดูเวลาเพิ่มเติม</div>
+        <div class="table-responsive">
+            <table class="table table-timetable">
+                <thead>
+                    <tr>
+                        <th class="th-day">วัน / เวลา</th>
+                        ${timeSlots.map(t => `<th class="th-time">${t}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>`;
 
         days.forEach(day => {
-            const list = allStudents.filter(s => (Object.values(s)[14] || "").includes(day));
-            if (list.length === 0) return;
-
-            // จัดกลุ่มตามเวลา
-            const groups = {};
-            list.forEach(s => {
-                const time = Object.values(s)[15] || "ไม่ระบุเวลา";
-                if (!groups[time]) groups[time] = [];
-                groups[time].push(s);
-            });
-
-            // เรียงเวลา
-            const sortedTimes = Object.keys(groups).sort();
-
-            let dayHtml = `<div class="day-section"><div class="day-label-main">วัน${day}</div>`;
-            
-            sortedTimes.forEach(time => {
-                dayHtml += `<div class="time-group"><div class="time-header">⏰ รอบเวลา ${time} น.</div>`;
-                groups[time].forEach(s => {
+            html += `<tr><td class="th-day">วัน${day}</td>`;
+            timeSlots.forEach(slot => {
+                // กรองหานักเรียนที่เรียนวันนี้ และมีเวลาเรียนที่ "ขึ้นต้นด้วย" เลขชั่วโมงนี้
+                const matches = allStudents.filter(s => {
                     const v = Object.values(s);
-                    const t = allTeachers.find(tc => Object.values(tc)[0] == v[19]);
-                    dayHtml += `
-                    <div class="class-entry">
-                        <div class="info-core">
-                            <div class="name-row">${v[2]}</div>
-                            <div class="sub-row">🎸 ${v[8]} <span class="teacher-tag">ครู${t ? Object.values(t)[2] : '?'}</span></div>
-                        </div>
-                        <div class="remain-circle">
-                            <span class="rem-n">${v[16] || 0}</span>
-                            <span class="rem-u">ชม.เหลือ</span>
-                        </div>
+                    const dayMatch = (v[14] || "").includes(day);
+                    const timeMatch = (v[15] || "").startsWith(slot.split(':')[0]);
+                    return dayMatch && timeMatch;
+                });
+
+                html += `<td>`;
+                matches.forEach(m => {
+                    const v = Object.values(m);
+                    html += `
+                    <div class="class-box">
+                        <span class="std-name-grid">${v[2]}</span>
+                        <span class="inst-tag">${v[8] || ''}</span>
+                        <div class="rem-tag">เหลือ ${v[16] || 0}</div>
                     </div>`;
                 });
-                dayHtml += `</div>`;
+                html += `</td>`;
             });
-            dayHtml += `</div>`;
-            fullHtml += dayHtml;
+            html += `</tr>`;
         });
-        container.innerHTML = fullHtml || '<div class="text-center p-5 text-muted">ไม่มีตารางเรียนในสัปดาห์นี้</div>';
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
     }
 
     function switchPage(p) {
@@ -187,7 +173,7 @@
                 const base64 = canvas.toDataURL('image/jpeg', 0.5);
                 try {
                     await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 })});
-                    Swal.fire({ icon: 'success', title: 'อัปโหลดสำเร็จ', timer: 1000, showConfirmButton: false });
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1000, showConfirmButton: false });
                     loadData();
                 } catch (err) { Swal.fire('Error', 'ลองใหม่ครับ', 'error'); }
             };
