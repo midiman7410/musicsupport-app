@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f8f9fa; padding: 20px; font-family: sans-serif; }
-        .student-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .student-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; }
         .header-title { font-weight: bold; color: #333; margin-bottom: 25px; text-align: center; }
     </style>
 </head>
@@ -18,28 +18,32 @@
     </div>
 
     <script>
-        // *** สำคัญ: ก๊อป URL จาก Deploy ล่าสุดในหน้า Apps Script มาวางตรงนี้ ***
-        const apiUrl = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsI7CXi5cG9FZhvpO3kr6JHdv8iAZhZ_6-7o/exec';
+        // ใช้ URL ล่าสุดจากรูป Deployment ของคุณ
+        const apiUrl = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsl7CXi5cG9FZhvp03kr6JHdv8iAZhZ_6-7o/exec';
 
         async function loadData() {
             try {
                 const response = await fetch(apiUrl);
                 const fullData = await response.json();
                 
-                // แก้ให้หยิบก้อน students มาใช้
+                // จุดสำคัญ: ต้องเลือกหยิบเฉพาะก้อน 'students'
                 const students = fullData.students; 
                 
                 let html = '';
-                students.forEach(s => {
-                    html += `
-                        <div class="student-card d-flex justify-content-between align-items-center">
-                            <div class="text-start">
-                                <h5 class="mb-0">${s['ชื่อเล่น'] || 'ไม่ระบุชื่อ'}</h5>
-                                <small class="text-muted">รหัส: ${s['รหัสนักเรียน'] || '-'}</small>
-                            </div>
-                            <button class="btn btn-primary btn-sm" onclick="alert('เช็คชื่อสำเร็จ')">เช็คชื่อ</button>
-                        </div>`;
-                });
+                if (students && students.length > 0) {
+                    students.forEach(s => {
+                        html += `
+                            <div class="student-card d-flex justify-content-between align-items-center">
+                                <div class="text-start">
+                                    <h5 class="mb-0" style="font-weight: 600;">${s['ชื่อเล่น'] || 'ไม่ระบุชื่อ'}</h5>
+                                    <small class="text-muted">รหัส: ${s['รหัสนักเรียน'] || '-'}</small>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="alert('เช็คชื่อสำเร็จ')">เช็คชื่อ</button>
+                            </div>`;
+                    });
+                } else {
+                    html = '<p>ไม่พบข้อมูลนักเรียน</p>';
+                }
                 document.getElementById('studentList').innerHTML = html;
             } catch (error) {
                 document.getElementById('studentList').innerHTML = '<div class="alert alert-danger">❌ โหลดข้อมูลไม่สำเร็จ กรุณาเช็ค Apps Script</div>';
