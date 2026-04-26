@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Support - Admin V 0.0.036</title>
+    <title>Music Support - Admin V 0.0.037</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -21,20 +21,21 @@
         .btn-filter { background: white; border: 1px solid #ddd; border-radius: 20px; padding: 5px 18px; font-size: 0.85rem; cursor: pointer; }
         .btn-filter.active { background: #007bff; color: white; border-color: #007bff; }
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .data-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; min-height: 250px; transition: 0.3s; }
+        .data-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; min-height: 280px; }
         .btn-edit-tool { position: absolute; top: 10px; right: 10px; background: #f8f9fa; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; cursor: pointer; z-index: 10; }
         .name-title { font-size: 1.1rem; font-weight: 600; color: #1a1a1a; margin-top: 5px; margin-bottom: 8px; }
-        .photo-slot { width: 90px; height: 90px; background: #f0f0f0; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+        .photo-slot { width: 85px; height: 85px; background: #f0f0f0; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
-        .info-row { font-size: 0.85rem; margin-bottom: 5px; display: flex; justify-content: space-between; padding: 0 10px; color: #555; }
-        .upload-area { margin-top: 15px; }
-        .upload-label { display: block; font-size: 0.75rem; color: #007bff; cursor: pointer; border: 1px dashed #007bff; border-radius: 12px; padding: 8px; background: #f0f7ff; }
+        .info-row { font-size: 0.8rem; margin-bottom: 4px; display: flex; justify-content: space-between; padding: 0 8px; color: #444; }
+        .schedule-box { font-size: 0.75rem; background: #fff9e6; color: #856404; padding: 4px; border-radius: 8px; margin: 5px 0; border: 1px solid #ffeeba; }
+        .upload-area { margin-top: 10px; }
+        .upload-label { display: block; font-size: 0.7rem; color: #007bff; cursor: pointer; border: 1px dashed #007bff; border-radius: 10px; padding: 6px; }
         .progress { height: 8px; margin-top: 5px; display: none; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="version-tag" id="ui-version-tag">V 0.0.036</div>
+<div class="version-tag">V 0.0.037</div>
 
 <div class="container">
     <h2 class="header-title">🎸 Music Support Admin</h2>
@@ -43,7 +44,7 @@
         <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">คุณครู</button></li>
     </ul>
 
-    <div class="search-container"><input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 ค้นหาชื่อเล่น..." onkeyup="handleSearch()"></div>
+    <div class="search-container"><input type="text" id="searchInput" class="form-control search-input" placeholder="🔍 ค้นหาชื่อ..." onkeyup="handleSearch()"></div>
     
     <div class="filter-container" id="studentFilter">
         <button class="btn-filter active" onclick="filterStudent('all', this)">ทั้งหมด</button>
@@ -54,25 +55,27 @@
     </div>
 
     <div id="displayList" class="main-grid">
-        <div class="text-center w-100 mt-5">กำลังดึงข้อมูลจากระบบ...</div>
+        <div class="text-center w-100 mt-5">กำลังโหลด...</div>
     </div>
 </div>
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px;">
-            <div class="modal-header border-0"><h5>📝 แก้ไขข้อมูล</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header border-0"><h5>📝 ข้อมูลนักเรียน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <input type="hidden" id="editId">
                 <div class="mb-3"><label class="small text-muted">ชื่อเล่น</label><input type="text" id="editNick" class="form-control"></div>
-                <div class="mb-3"><label class="small text-muted">ชื่อ-นามสกุล</label><input type="text" id="editFull" class="form-control"></div>
-                <div class="mb-3"><label class="small text-muted">วิชา</label><input type="text" id="editSubject" class="form-control"></div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="small text-muted">วันเรียน (คอลัมน์ O)</label><input type="text" id="editDay" class="form-control" placeholder="เช่น จันทร์"></div>
+                    <div class="col-6 mb-3"><label class="small text-muted">เวลาเรียน (คอลัมน์ P)</label><input type="text" id="editTime" class="form-control" placeholder="เช่น 17:00"></div>
+                </div>
                 <div class="row">
                     <div class="col-6 mb-3"><label class="small text-muted">ชม. คงเหลือ</label><input type="number" id="editRemain" class="form-control"></div>
-                    <div class="col-6 mb-3"><label class="small text-muted">ลาไปแล้ว</label><input type="number" id="editLeave" class="form-control"></div>
+                    <div class="col-6 mb-3"><label class="small text-muted">วิชา</label><input type="text" id="editSubject" class="form-control"></div>
                 </div>
             </div>
-            <div class="modal-footer border-0"><button type="button" id="saveBtn" class="btn btn-primary w-100" onclick="saveEdit()" style="border-radius: 12px;">บันทึกการเปลี่ยนแปลง</button></div>
+            <div class="modal-footer border-0"><button type="button" id="saveBtn" class="btn btn-primary w-100" onclick="saveEdit()" style="border-radius: 12px;">บันทึก</button></div>
         </div>
     </div>
 </div>
@@ -91,9 +94,7 @@
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
             renderDisplay();
-        } catch (e) { 
-            document.getElementById('displayList').innerHTML = '<div class="alert alert-danger mx-auto">ไม่สามารถเชื่อมต่อฐานข้อมูลได้</div>';
-        }
+        } catch (e) { document.getElementById('displayList').innerHTML = 'โหลดผิดพลาด'; }
     }
 
     function renderDisplay(data = null) {
@@ -103,64 +104,44 @@
 
         displayData.forEach(item => {
             const vals = Object.values(item);
-            const keys = Object.keys(item);
-
-            // 🔍 Smart Search: ค้นหาข้อมูลจากชื่อหัวตารางหรือลำดับที่น่าจะเป็น
-            const findVal = (names, fallbackIdx) => {
-                let found = names.map(n => item[n]).find(v => v !== undefined && v !== "");
-                return found !== undefined ? found : (vals[fallbackIdx] || "-");
-            };
-
             if (currentPage === 'student') {
-                const id = findVal(['รหัสนักเรียน'], 0);
-                const nick = findVal(['ชื่อเล่น'], 2);
-                const remain = findVal(['ชั่วโมงคงเหลือ'], 16);
+                const id = item['รหัสนักเรียน'] || vals[0];
+                const nick = item['ชื่อเล่น'] || vals[2];
+                const day = item['หมายเหตุ'] || vals[14] || '-'; // คอลัมน์ O
+                const time = item['วันหมดอายุ'] || vals[15] || '-'; // คอลัมน์ P
+                const remain = item['ชั่วโมงคงเหลือ'] || vals[16];
                 
-                // ค้นหารูป: หาช่องที่มี data:image หรือคอลัมน์ท้ายๆ
                 let img = vals.find(v => v && v.toString().startsWith('data:image'));
-                const profileImg = img ? img : 'https://via.placeholder.com/90?text=👤';
+                const profileImg = img ? img : 'https://via.placeholder.com/85?text=👤';
 
                 html += `
                 <div class="data-card">
                     <div class="btn-edit-tool" onclick="openEdit('${id}')">⚙️</div>
                     <div class="name-title">${nick}</div>
                     <div class="photo-slot"><img src="${profileImg}"></div>
+                    <div class="schedule-box">🕒 ${day} | ${time}</div>
                     <div class="info-row"><span>คงเหลือ:</span><span class="text-success fw-bold">${remain} ชม.</span></div>
                     <div class="upload-area">
-                        <label class="upload-label" id="label-${id}">📷 อัปเดตรูปภาพ<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
+                        <label class="upload-label" id="label-${id}">📷 เปลี่ยนรูป<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
                         <div class="progress" id="progress-${id}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%"></div></div>
                     </div>
                 </div>`;
             } else {
-                const tName = item['ชื่อเล่น'] || vals[2] || vals[1] || "-";
-                html += `
-                <div class="data-card">
-                    <div class="name-title">${tName}</div>
-                    <div class="info-row"><span>วิชา:</span><span>${item['วิชาที่สอน'] || vals[3] || "-"}</span></div>
-                    <div class="info-row"><span>เบอร์โทร:</span><span>${item['เบอร์โทร'] || vals[4] || "-"}</span></div>
-                </div>`;
+                html += `<div class="data-card"><div class="name-title">${item['ชื่อเล่น'] || vals[2]}</div></div>`;
             }
         });
-        listDiv.innerHTML = html || '<div class="text-center w-100 mt-5">ไม่พบข้อมูลที่ค้นหา</div>';
+        listDiv.innerHTML = html || '<div class="text-center w-100 mt-5">ไม่พบข้อมูล</div>';
     }
 
-    function switchPage(page) {
-        currentPage = page;
-        document.getElementById('navStudent').classList.toggle('active', page === 'student');
-        document.getElementById('navTeacher').classList.toggle('active', page === 'teacher');
-        document.getElementById('studentFilter').style.display = (page === 'student') ? 'flex' : 'none';
-        renderDisplay();
-    }
-
+    // ส่วนของระบบค้นหาและอัปโหลดรูป (ใช้โค้ดเดิมที่พี่มีอยู่ได้เลย)
+    function switchPage(page) { currentPage = page; renderDisplay(); }
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
         const data = currentPage === 'student' ? allStudents : allTeachers;
         renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
-
     function filterStudent(sub, btn) {
-        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); btn.classList.add('active');
         renderDisplay(sub === 'all' ? allStudents : allStudents.filter(s => Object.values(s).includes(sub)));
     }
 
@@ -168,24 +149,18 @@
         const file = input.files[0]; if (!file) return;
         document.getElementById(`label-${id}`).style.display = 'none';
         document.getElementById(`progress-${id}`).style.display = 'flex';
-        
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
+        const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = async (e) => {
             const img = new Image(); img.src = e.target.result;
             img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
                 canvas.width = 300; canvas.height = img.height * (300/img.width);
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 const base64 = canvas.toDataURL('image/jpeg', 0.8);
                 try {
-                    const res = await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 }) });
-                    const result = await res.json();
-                    if (result.status === 'success') { 
-                        Swal.fire({ icon: 'success', title: 'อัปโหลดสำเร็จ', timer: 1000, showConfirmButton: false }).then(() => loadData());
-                    }
-                } catch (err) { Swal.fire('Error', 'ลองใหม่อีกครั้ง', 'error'); }
+                    await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 }) });
+                    loadData();
+                } catch (err) { Swal.fire('Error', 'ลองใหม่', 'error'); }
             };
         };
     }
@@ -196,10 +171,10 @@
         const v = Object.values(s);
         document.getElementById('editId').value = s['รหัสนักเรียน'] || v[0];
         document.getElementById('editNick').value = s['ชื่อเล่น'] || v[2] || "";
-        document.getElementById('editFull').value = s['ชื่อ-นามสกุล'] || v[1] || "";
-        document.getElementById('editSubject').value = s['วิชาที่ 1'] || v[8] || "";
+        document.getElementById('editDay').value = s['หมายเหตุ'] || v[14] || "";
+        document.getElementById('editTime').value = s['วันหมดอายุ'] || v[15] || "";
         document.getElementById('editRemain').value = s['ชั่วโมงคงเหลือ'] || v[16] || 0;
-        document.getElementById('editLeave').value = s['จำนวนครั้งที่ลา'] || v[17] || 0;
+        document.getElementById('editSubject').value = s['วิชาที่ 1'] || v[8] || "";
         new bootstrap.Modal(document.getElementById('editModal')).show();
     }
 
@@ -209,15 +184,15 @@
             action: 'updateStudent',
             studentId: document.getElementById('editId').value.toString(),
             nickname: document.getElementById('editNick').value,
-            fullName: document.getElementById('editFull').value,
-            subject: document.getElementById('editSubject').value,
+            day: document.getElementById('editDay').value,    // ส่งไปลงช่อง O
+            time: document.getElementById('editTime').value,  // ส่งไปลงช่อง P
             remain: document.getElementById('editRemain').value,
-            leave: document.getElementById('editLeave').value
+            subject: document.getElementById('editSubject').value
         };
         try {
-            const res = await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) });
-            Swal.fire('สำเร็จ', 'บันทึกข้อมูลแล้ว', 'success').then(() => location.reload());
-        } catch (e) { Swal.fire('Error', 'เชื่อมต่อล้มเหลว', 'error'); btn.disabled = false; }
+            await fetch(apiUrl, { method: 'POST', body: JSON.stringify(payload) });
+            Swal.fire('สำเร็จ', 'บันทึกแล้ว', 'success').then(() => location.reload());
+        } catch (e) { btn.disabled = false; }
     }
 
     loadData();
