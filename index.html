@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Full Restore V 0.0.78</title>
+    <title>Music Admin - Admin Only V 0.0.79</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -30,19 +30,19 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.78</div>
+<div class="v-badge">V 0.0.79</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
     
     <ul class="nav nav-pills">
-        <li class="nav-item"><button id="navOverview" class="nav-link active" onclick="switchPage('overview')">ภาพรวม</button></li>
-        <li class="nav-item"><button id="navStudent" class="nav-link" onclick="switchPage('student')">นักเรียน</button></li>
+        <li class="nav-item"><button id="navOverview" class="nav-link" onclick="checkAdminAuth()">ภาพรวม</button></li>
+        <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
         <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">คุณครู</button></li>
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
 
-    <div id="searchBox" class="px-3 mb-3" style="display:none;">
+    <div id="searchBox" class="px-3 mb-3">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหาชื่อนักเรียน..." onkeyup="handleSearch()" style="border-radius: 20px;">
     </div>
     
@@ -51,7 +51,9 @@
 
 <script>
     const apiUrl = 'https://script.google.com/macros/s/AKfycbwNLW9rMRdeq82LaLCrP5PCyxj0Sz-GFcnD1hs4ZG6AviyV7NpH6mWNIBLGN7NVCEvf/exec';
-    let allStudents = [], allTeachers = [], currentPage = 'overview';
+    const ADMIN_PIN = "1234"; // << พี่แก้รหัสผ่านตรงนี้ครับ
+    let isAdmin = false;
+    let allStudents = [], allTeachers = [], currentPage = 'student';
 
     async function loadData() {
         try {
@@ -61,6 +63,26 @@
             allTeachers = data.teachers || [];
             renderDisplay();
         } catch (e) { document.getElementById('displayArea').innerHTML = '<div class="text-center p-5">โหลดข้อมูลไม่สำเร็จ</div>'; }
+    }
+
+    // ฟังก์ชันเช็ครหัสผ่านแอดมิน
+    async function checkAdminAuth() {
+        if (isAdmin) { switchPage('overview'); return; }
+        
+        const { value: password } = await Swal.fire({
+            title: 'รหัสผ่านแอดมิน',
+            input: 'password',
+            inputPlaceholder: 'กรอก PIN 4 หลัก',
+            showCancelButton: true,
+            confirmButtonColor: '#ff6600'
+        });
+
+        if (password === ADMIN_PIN) {
+            isAdmin = true;
+            switchPage('overview');
+        } else if (password) {
+            Swal.fire('รหัสผ่านไม่ถูกต้อง', '', 'error');
+        }
     }
 
     function renderDisplay() {
@@ -73,10 +95,10 @@
     }
 
     function renderOverview(container) {
+        if (!isAdmin) { switchPage('student'); return; }
+        
         const totalStudents = allStudents.length;
         const totalTeachers = allTeachers.length;
-        
-        // --- ส่วนที่แก้ไข: ปรับปรุงการเช็กจำนวนคนใกล้หมดคอร์ส ---
         const lowHours = allStudents.filter(s => {
             const val = Object.values(s)[16];
             const hr = (val === "" || val === null || isNaN(val)) ? 0 : parseFloat(val);
@@ -90,13 +112,28 @@
                     <div class="col-6"><div class="stat-card"><div class="small text-muted">คุณครู</div><div class="h2 fw-bold text-primary">${totalTeachers}</div></div></div>
                     <div class="col-12"><div class="stat-card" style="border-color: #dc3545;"><div class="small text-muted">ใกล้หมดคอร์ส (≤ 2 ชม.)</div><div class="h2 fw-bold text-danger">${lowHours} คน</div></div></div>
                 </div>
-                <h6 class="fw-bold mt-4 mb-3">เมนู</h6>
-                <div class="list-group shadow-sm">
-                    <button class="list-group-item list-group-item-action py-3" onclick="switchPage('student')">👤 รายชื่อนักเรียนทั้งหมด</button>
-                    <button class="list-group-item list-group-item-action py-3" onclick="switchPage('teacher')">🎻 สำหรับคุณครู (เช็กชื่อ)</button>
-                    <button class="list-group-item list-group-item-action py-3" onclick="switchPage('schedule')">📅 ตารางเรียนรวม</button>
+                
+                <h6 class="fw-bold mt-4 mb-3">ระบบจัดการแอดมิน</h6>
+                <div class="list-group shadow-sm mb-4">
+                    <button class="list-group-item list-group-item-action py-3 text-primary fw-bold" onclick="calculateSalary()">💰 คำนวณเงินเดือนครู (เดือนปัจจุบัน)</button>
+                    <button class="list-group-item list-group-item-action py-3" onclick="isAdmin=false; switchPage('student');">🔒 ออกจากระบบแอดมิน</button>
                 </div>
             </div>`;
+    }
+
+    // ฟังก์ชันคำนวณเงินเดือน (เบื้องต้นโชว์ Alert ก่อน)
+    function calculateSalary() {
+        Swal.fire({
+            title: 'คำนวณเงินเดือน',
+            text: 'ระบบกำลังดึงข้อมูลการสอนจาก Google Sheets...',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'เริ่มคำนวณ'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('Coming Soon', 'ฟังก์ชันเชื่อมต่อยอดเงินเดือนกำลังถูกติดตั้งใน V ถัดไปครับพี่', 'success');
+            }
+        });
     }
 
     function renderStudentList(filteredData = null) {
