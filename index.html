@@ -3,41 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Support - Admin V 0.0.049</title>
+    <title>Music Support - Admin V 0.0.050</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background: #f4f7f6; padding: 15px; font-family: 'Sarabun', sans-serif; padding-bottom: 60px; }
+        .header-title { font-weight: bold; color: #333; text-align: center; margin-bottom: 20px; font-size: 1.5rem; }
+        .nav-pills { justify-content: center; margin-bottom: 20px; background: #eee; border-radius: 30px; padding: 5px; }
+        .nav-link { border-radius: 25px !important; color: #666; font-weight: 600; font-size: 0.85rem; border: none; background: none; }
+        .nav-link.active { background-color: #007bff !important; color: white !important; box-shadow: 0 4px 10px rgba(0,123,255,0.3); }
+        
+        /* การ์ดนักเรียน/ครู */
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
         .data-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; min-height: 320px; }
-        
-        /* สไตล์สำหรับกรอบรูป */
         .photo-slot { width: 90px; height: 90px; background: #e9ecef; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
-        /* สไตล์สำหรับ Icon กรณีไม่มีรูป */
         .default-icon { width: 50px; height: 50px; fill: #adb5bd; }
+
+        /* ตารางเรียน */
+        .schedule-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .day-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        .day-header { padding: 10px; font-weight: bold; text-align: center; color: white; }
+        .day-จันทร์ { background: #ffd600; color: #333; } .day-อังคาร { background: #ff80ab; } .day-พุธ { background: #4caf50; }
+        .day-พฤหัสบดี { background: #ff9800; } .day-ศุกร์ { background: #2196f3; } .day-เสาร์ { background: #9c27b0; } .day-อาทิตย์ { background: #f44336; }
+        .class-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; display: flex; align-items: center; }
+        .class-time { font-weight: bold; color: #007bff; min-width: 75px; }
 
         .upload-label { display: block; font-size: 0.7rem; color: #007bff; cursor: pointer; border: 1px dashed #007bff; border-radius: 12px; padding: 8px; background: #f0f7ff; margin-top: auto; }
         .progress { height: 10px; margin-top: 5px; display: none; border-radius: 10px; }
-        .version-tag { position: fixed; bottom: 5px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; padding: 2px 10px; border-radius: 15px; font-size: 0.6rem; }
+        .version-tag { position: fixed; bottom: 5px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; padding: 2px 10px; border-radius: 15px; font-size: 0.6rem; z-index: 9999; }
     </style>
 </head>
 <body>
 
-<div class="version-tag">V 0.0.049 (Internal Icon - No External Pull)</div>
+<div class="version-tag">V 0.0.050 (Full Restore)</div>
 
 <div class="container-fluid">
-    <h2 class="text-center mt-3 mb-4">🎸 Music Admin</h2>
-    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นชื่อเล่น..." onkeyup="handleSearch()" style="border-radius: 20px;"></div>
+    <h2 class="header-title">🎸 Music Admin</h2>
+    <ul class="nav nav-pills nav-fill mb-3">
+        <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
+        <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">ครู</button></li>
+        <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตาราง</button></li>
+    </ul>
+
+    <div id="searchBox" class="mb-3"><input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหา..." onkeyup="handleSearch()" style="border-radius: 20px;"></div>
     <div id="displayArea"><div class="text-center mt-5">กำลังโหลดข้อมูล...</div></div>
 </div>
 
 <script>
     const apiUrl = 'https://script.google.com/macros/s/AKfycby0JWsd9ETsAlt81Aiw66Cb7Jha6c1XRiJjv80XOKVneXqiY0LxT93pgHBY7hwyoCOO/exec';
-    let allStudents = [];
-
-    // SVG Icon รูปคน สำหรับใช้ภายใน ไม่ต้องดึงจากเว็บอื่น
+    let allStudents = [], allTeachers = [], currentPage = 'student';
     const personIcon = `<svg class="default-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
 
     async function loadData() {
@@ -45,90 +61,107 @@
             const res = await fetch(`${apiUrl}?t=${new Date().getTime()}`, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
             allStudents = data.students || [];
+            allTeachers = data.teachers || [];
             renderDisplay();
         } catch (e) { document.getElementById('displayArea').innerHTML = 'โหลดข้อมูลไม่สำเร็จ'; }
     }
 
     function renderDisplay(data = null) {
         const area = document.getElementById('displayArea');
-        const listData = data || allStudents;
+        const listData = data || (currentPage === 'student' ? allStudents : allTeachers);
+        
+        if (currentPage === 'schedule') {
+            renderSchedule();
+            return;
+        }
+
         let html = '<div class="main-grid">';
-        listData.forEach(s => {
-            const v = Object.values(s);
+        listData.forEach(item => {
+            const v = Object.values(item);
             const id = v[0];
-            const rawImg = v[18]; // คอลัมน์ S
-            
-            // ตรวจสอบว่ามีข้อมูล Base64 หรือไม่
-            const hasPhoto = rawImg && rawImg.toString().startsWith('data:image');
-            const photoContent = hasPhoto ? `<img src="${rawImg}" id="img-${id}">` : `<div id="img-box-${id}">${personIcon}</div>`;
-            
-            html += `<div class="data-card">
-                <div class="fw-bold mb-1">${v[2] || 'ไม่มีชื่อ'}</div>
-                <div class="photo-slot" id="slot-${id}">${photoContent}</div>
-                <div class="small text-muted mb-1">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
-                <div class="mb-2">คงเหลือ: <span style="color:#28a745; font-weight:bold;">${v[16] || 0} ชม.</span></div>
-                <label class="upload-label" id="label-${id}">📷 อัปรูปใหม่<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
-                <div class="progress" id="progress-${id}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div></div>
-            </div>`;
+            if (currentPage === 'student') {
+                const rawImg = v[18]; // ช่อง S
+                const hasPhoto = rawImg && rawImg.toString().startsWith('data:image');
+                const photoContent = hasPhoto ? `<img src="${rawImg}" id="img-${id}">` : `<div id="img-box-${id}">${personIcon}</div>`;
+                html += `<div class="data-card">
+                    <div class="fw-bold mb-1">${v[2] || 'ไม่มีชื่อ'}</div>
+                    <div class="photo-slot" id="slot-${id}">${photoContent}</div>
+                    <div class="small text-muted">🕒 ${v[14] || '-'} | ${v[15] || '-'}</div>
+                    <div class="mb-2">คงเหลือ: <span style="color:#28a745; font-weight:bold;">${v[16] || 0} ชม.</span></div>
+                    <label class="upload-label" id="label-${id}">📷 อัปรูปใหม่<input type="file" hidden accept="image/*" onchange="handleUpload(this, '${id}')"></label>
+                    <div class="progress" id="progress-${id}"><div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div></div>
+                </div>`;
+            } else {
+                html += `<div class="data-card" style="min-height:120px; justify-content:center;">
+                    <div class="fw-bold">${v[2] || 'ไม่มีชื่อ'}</div>
+                    <div class="small text-muted">ID: ${id}</div>
+                </div>`;
+            }
         });
         area.innerHTML = html + '</div>';
     }
 
+    function renderSchedule() {
+        const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+        let html = '<div class="schedule-container">';
+        days.forEach(day => {
+            const filtered = allStudents.filter(s => (Object.values(s)[14] || "").toString().includes(day));
+            filtered.sort((a, b) => (Object.values(a)[15] || "").toString().localeCompare((Object.values(b)[15] || "").toString()));
+            html += `<div class="day-card">
+                <div class="day-header day-${day}">${day}</div>
+                <div class="day-body">
+                    ${filtered.length > 0 ? filtered.map(s => {
+                        const v = Object.values(s);
+                        const teacher = allTeachers.find(t => Object.values(t)[0] == v[19]);
+                        return `<div class="class-item">
+                            <div class="class-time">${v[15] || '--:--'}</div>
+                            <div><strong>${v[2]}</strong><br><small class="text-muted">🎸 ${v[8]} - ครู${teacher ? Object.values(teacher)[2] : '?'}</small></div>
+                        </div>`;
+                    }).join('') : '<div class="p-3 text-center text-muted small">ไม่มีเรียน</div>'}
+                </div>
+            </div>`;
+        });
+        document.getElementById('displayArea').innerHTML = html + '</div>';
+    }
+
     async function handleUpload(input, id) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const label = document.getElementById(`label-${id}`);
-        const progress = document.getElementById(`progress-${id}`);
-        const slot = document.getElementById(`slot-${id}`);
-
-        label.style.display = 'none';
-        progress.style.display = 'flex';
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
+        const file = input.files[0]; if (!file) return;
+        const label = document.getElementById(`label-${id}`), progress = document.getElementById(`progress-${id}`), slot = document.getElementById(`slot-${id}`);
+        label.style.display = 'none'; progress.style.display = 'flex';
+        const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
+            const img = new Image(); img.src = e.target.result;
             img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const targetSize = 600;
-                canvas.width = targetSize; canvas.height = targetSize;
-
-                let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height;
-                if (img.width > img.height) {
-                    sourceWidth = img.height; sourceX = (img.width - img.height) / 2;
-                } else {
-                    sourceHeight = img.width; sourceY = (img.height - img.width) / 2;
-                }
-
-                ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetSize, targetSize);
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                canvas.width = 600; canvas.height = 600;
+                let sX = 0, sY = 0, sW = img.width, sH = img.height;
+                if (img.width > img.height) { sW = img.height; sX = (img.width-img.height)/2; } else { sH = img.width; sY = (img.height-img.width)/2; }
+                ctx.drawImage(img, sX, sY, sW, sH, 0, 0, 600, 600);
                 const base64 = canvas.toDataURL('image/jpeg', 0.6);
-
                 try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 })
-                    });
-                    const result = await response.json();
+                    const res = await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'uploadImage', studentId: id.toString(), base64: base64 })});
+                    const result = await res.json();
                     if (result.status === 'success') {
-                        // เปลี่ยนจาก Icon เป็นรูปที่เพิ่งอัปโหลดทันที
                         slot.innerHTML = `<img src="${base64}" id="img-${id}">`;
-                        Swal.fire({ icon: 'success', title: 'อัปโหลดสำเร็จ', timer: 1000, showConfirmButton: false });
+                        Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1000, showConfirmButton: false });
                     }
-                } catch (err) {
-                    Swal.fire('Error', 'การเชื่อมต่อขัดข้อง', 'error');
-                } finally {
-                    progress.style.display = 'none'; label.style.display = 'block';
-                }
+                } catch (err) { Swal.fire('Error', 'ลองใหม่อีกครั้ง', 'error'); }
+                finally { progress.style.display = 'none'; label.style.display = 'block'; }
             };
         };
     }
 
+    function switchPage(p) { 
+        currentPage = p; 
+        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+        document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('active');
+        document.getElementById('searchBox').style.display = (p === 'schedule') ? 'none' : 'block';
+        renderDisplay(); 
+    }
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
-        renderDisplay(allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
+        const data = (currentPage === 'student' ? allStudents : allTeachers);
+        renderDisplay(data.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
     loadData();
 </script>
