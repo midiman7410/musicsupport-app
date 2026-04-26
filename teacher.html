@@ -1,22 +1,96 @@
-// ในส่วน <script> ของหน้า teacher.html
-const API_URL = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsl7CXi5cG9FZhvp03kr6JHdv8iAZhZ_6-7o/exec';
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ครูผู้สอน - Music Support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #121212; color: white; padding: 20px; font-family: sans-serif; }
+        .login-box { max-width: 350px; margin: 80px auto; background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .card-class { background: #2d2d2d; border-radius: 12px; padding: 15px; margin-bottom: 10px; border-left: 5px solid #ffcc00; }
+        .btn-yellow { background: #ffcc00; color: black; font-weight: bold; border: none; }
+        .btn-yellow:hover { background: #e6b800; }
+    </style>
+</head>
+<body>
 
-async function handleLogin() {
-    const inputId = document.getElementById('teacherId').value.trim();
-    try {
-        const res = await fetch(API_URL);
-        const fullData = await res.json();
+<div id="loginArea">
+    <div class="login-box text-center">
+        <h4 class="mb-4">เข้าสู่ระบบครูสอน</h4>
+        <input type="text" id="teacherId" class="form-control mb-3 text-center" placeholder="ใส่รหัสครู (เช่น T001)">
+        <button class="btn btn-yellow w-100" onclick="handleLogin()">เข้าสู่ระบบ</button>
+        <p id="msg" class="text-danger mt-3" style="display:none;">❌ ไม่พบรหัสครูนี้ในระบบ</p>
+    </div>
+</div>
+
+<div id="mainArea" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 id="helloTeacher">สวัสดี</h4>
+        <button class="btn btn-sm btn-outline-light" onclick="location.reload()">ออกจากระบบ</button>
+    </div>
+    <div id="scheduleList">กำลังโหลดตารางสอน...</div>
+</div>
+
+<script>
+    // URL ล่าสุดจากหน้า Deployment ของคุณ
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxuozyH7Jtntzpd1CAu_kOlefKPbdtSWsl7CXi5cG9FZhvp03kr6JHdv8iAZhZ_6-7o/exec';
+
+    async function handleLogin() {
+        const inputId = document.getElementById('teacherId').value.trim();
+        const msg = document.getElementById('msg');
         
-        // ค้นหาจากก้อน 'teachers'
-        const info = fullData.teachers.find(item => item['รหัสครู'] === inputId);
-
-        if (info) {
-            document.getElementById('loginArea').style.display = 'none';
-            document.getElementById('mainArea').style.display = 'block';
-            document.getElementById('helloTeacher').innerText = "ครู" + info['ชื่อเล่น'];
-            renderSchedule(info['วิชาที่สอน_1'], info['วิชาที่สอน_2'], fullData.students);
-        } else {
-            document.getElementById('msg').style.display = 'block';
+        if (!inputId) {
+            alert("กรุณาใส่รหัสครู");
+            return;
         }
-    } catch (e) { alert("Error: เชื่อมข้อมูลไม่ได้"); }
-}
+
+        try {
+            const res = await fetch(API_URL);
+            const fullData = await res.json();
+            
+            // ค้นหาข้อมูลครูจากก้อน 'teachers'
+            const info = fullData.teachers.find(item => item['รหัสครู'] === inputId);
+
+            if (info) {
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('mainArea').style.display = 'block';
+                document.getElementById('helloTeacher').innerText = "สวัสดี ครู" + info['ชื่อเล่น'];
+                
+                // นำก้อน 'students' มากรองตารางสอนตามวิชาของครูคนนั้น
+                renderSchedule(info['วิชาที่สอน_1'], info['วิชาที่สอน_2'], fullData.students);
+            } else {
+                msg.style.display = 'block';
+            }
+        } catch (e) {
+            console.error(e);
+            alert("เกิดข้อผิดพลาด: ไม่สามารถเชื่อมต่อข้อมูลได้");
+        }
+    }
+
+    function renderSchedule(v1, v2, studentData) {
+        let html = '';
+        // กรองนักเรียนที่เรียนวิชาตรงกับที่ครูคนนี้สอน
+        const list = studentData.filter(s => (s['วิชา'] === v1 || s['วิชา'] === v2) && s['ชื่อเล่น']);
+
+        if(list.length === 0) {
+            html = '<div class="text-center text-muted mt-5"><p>ไม่มีตารางสอนในวิชานี้</p></div>';
+        } else {
+            list.forEach(s => {
+                html += `
+                <div class="card-class shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong style="font-size: 1.1rem;">${s['ชื่อเล่น']}</strong>
+                            <div class="small text-muted">วิชา: ${s['วิชา']}</div>
+                        </div>
+                        <span class="badge bg-warning text-dark">${s['เวลาเรียน'] || 'ไม่ระบุเวลา'}</span>
+                    </div>
+                </div>`;
+            });
+        }
+        document.getElementById('scheduleList').innerHTML = html;
+    }
+</script>
+</body>
+</html>
