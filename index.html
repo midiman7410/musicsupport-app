@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - Editor System V 0.0.86</title>
+    <title>Music Admin - Edit Basic V 0.0.87</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -17,19 +17,14 @@
         .stat-card { background: white; border-radius: 15px; padding: 15px; text-align: center; border-bottom: 4px solid var(--main-orange); box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%; }
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 10px; }
         .std-card { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #eee; position: relative; }
-        .edit-btn-mini { position: absolute; top: 5px; right: 5px; background: #eee; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 0.7rem; cursor: pointer; }
+        .edit-btn-mini { position: absolute; top: 5px; right: 5px; background: #fff3e0; border: 1px solid #ffcc80; color: #e67e22; border-radius: 50%; width: 28px; height: 28px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .std-photo { width: 60px; height: 60px; background: #eee; border-radius: 50%; margin: 0 auto 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
         .std-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .table-responsive { background: white; border-radius: 12px; border: 1px solid #dee2e6; margin: 0 10px; overflow-x: auto; }
-        .table-timetable { min-width: 950px; margin-bottom: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
-        .th-day { width: 100px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; text-align: center; vertical-align: middle !important; position: sticky; left: 0; z-index: 2; border: 1px solid #eee; }
-        .th-time { background: var(--main-orange) !important; color: white !important; text-align: center; font-size: 0.85rem; padding: 10px !important; border: 1px solid #eee; }
-        .class-box { background: #fff; border: 1px solid #ffccaa; border-left: 4px solid var(--main-orange); border-radius: 8px; padding: 6px; margin-bottom: 5px; text-align: left; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
-<div class="v-badge">V 0.0.86</div>
+<div class="v-badge">V 0.0.87</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -87,98 +82,50 @@
 
     function renderOverview(container) {
         container.innerHTML = `
-            <div class="px-3">
+            <div class="px-3 text-center">
                 <div class="row g-3">
                     <div class="col-6"><div class="stat-card">นักเรียน<div class="h2 fw-bold">${allStudents.length}</div></div></div>
                     <div class="col-6"><div class="stat-card">คุณครู<div class="h2 fw-bold text-primary">${allTeachers.length}</div></div></div>
                 </div>
-                <div class="mt-4 shadow-sm rounded bg-white p-3">
-                    <h6 class="fw-bold mb-3">🛠️ เมนูจัดการ (Admin Only)</h6>
-                    <button class="btn btn-primary w-100 mb-2 fw-bold" onclick="showBulkEditor()">📝 แก้ไขข้อมูลนักเรียนทั้งหมด</button>
-                    <button class="btn btn-success w-100 mb-2 fw-bold" onclick="showSalaryReport()">💰 สรุปยอดเงินเดือนครู</button>
-                    <button class="btn btn-sm w-100 text-muted mt-2" onclick="isAdmin=false; switchPage('student');">🔒 ล็อคหน้าแอดมิน</button>
+                <div class="mt-4 p-3 bg-white rounded shadow-sm">
+                    <h6 class="fw-bold mb-3">🛠️ โหมดจัดการข้อมูล</h6>
+                    <p class="small text-muted">ปลดล็อคปุ่มแก้ไขในหน้านักเรียนแล้ว</p>
+                    <button class="btn btn-sm w-100 btn-outline-secondary mt-2" onclick="isAdmin=false; switchPage('student');">🔒 ล็อคระบบแอดมิน</button>
                 </div>
             </div>`;
     }
 
-    // --- ส่วนการแก้ไขรายคน ---
-    async function editStudentInfo(sId) {
-        if(!isAdmin) { Swal.fire('เฉพาะแอดมิน', 'กรุณาเข้าสู่ระบบหน้าภาพรวมก่อน', 'warning'); return; }
+    // --- แก้ไข ชื่อ และ ชั่วโมงคงเหลือ ---
+    async function editStudentBasic(sId) {
         const s = allStudents.find(x => Object.values(x)[0] == sId);
         const v = Object.values(s);
         
         const { value: formValues } = await Swal.fire({
-            title: `แก้ไขข้อมูล: ${v[2]}`,
+            title: `แก้ไขข้อมูลพื้นฐาน`,
             html: `
                 <div class="text-start">
-                    <label class="small">ชื่อนักเรียน</label><input id="ed-name" class="swal2-input mt-1 mb-2" value="${v[2]}">
-                    <label class="small">วิชาที่เรียน</label><input id="ed-subject" class="swal2-input mt-1 mb-2" value="${v[13] || ''}">
-                    <label class="small">เรทค่าสอนครู (บาท/ชม.)</label><input id="ed-rate" type="number" class="swal2-input mt-1 mb-2" value="${v[20] || 0}">
+                    <label class="small fw-bold">ชื่อนักเรียน</label>
+                    <input id="ed-name" class="swal2-input mt-1 mb-3" value="${v[2]}">
+                    <label class="small fw-bold">ชั่วโมงคงเหลือ</label>
+                    <input id="ed-remain" type="number" class="swal2-input mt-1 mb-2" value="${v[16] || 0}">
                 </div>`,
             showCancelButton: true,
-            confirmButtonText: 'บันทึก',
+            confirmButtonText: 'บันทึกข้อมูล',
             confirmButtonColor: '#ff6600'
         });
         
         if (formValues) {
-            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
-            // ส่ง Action ไปยัง Apps Script (ต้องมีฟังก์ชันรับ editStudent ใน Code.gs)
+            Swal.fire({ title: 'กำลังอัปเดต...', didOpen: () => Swal.showLoading() });
+            // ส่งข้อมูลไปที่ Apps Script (Action: editStudentBasic)
             await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ 
-                action: 'editStudent', 
+                action: 'editStudentBasic', 
                 studentId: sId,
                 name: document.getElementById('ed-name').value,
-                subject: document.getElementById('ed-subject').value,
-                rate: document.getElementById('ed-rate').value
+                remain: document.getElementById('ed-remain').value
             })});
             loadData();
-            Swal.fire('สำเร็จ', 'แก้ไขข้อมูลแล้ว', 'success');
+            Swal.fire('สำเร็จ', 'อัปเดตข้อมูลนักเรียนเรียบร้อย', 'success');
         }
-    }
-
-    // --- ส่วนการแก้ไขพร้อมกันหลายคน (Bulk Editor) ---
-    function showBulkEditor() {
-        let tableRows = '';
-        allStudents.forEach(s => {
-            const v = Object.values(s);
-            tableRows += `
-                <tr>
-                    <td class="small">${v[2]}</td>
-                    <td><input class="form-control form-control-sm bulk-rate" data-id="${v[0]}" type="number" value="${v[20] || 0}"></td>
-                    <td><input class="form-control form-control-sm bulk-subj" data-id="${v[0]}" value="${v[13] || ''}"></td>
-                </tr>`;
-        });
-
-        Swal.fire({
-            title: 'แก้ไขข้อมูลทั้งหมด',
-            html: `
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-sm text-start" style="font-size: 0.8rem;">
-                        <thead><tr><th>ชื่อ</th><th width="80">เรทสอน</th><th>วิชา</th></tr></thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
-                </div>`,
-            width: '95%',
-            showCancelButton: true,
-            confirmButtonText: 'บันทึกทั้งหมด',
-            confirmButtonColor: '#ff6600',
-            preConfirm: () => {
-                const updates = [];
-                document.querySelectorAll('.bulk-rate').forEach(el => {
-                    const id = el.dataset.id;
-                    const rate = el.value;
-                    const subject = document.querySelector(`.bulk-subj[data-id="${id}"]`).value;
-                    updates.push({ id, rate, subject });
-                });
-                return updates;
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
-                await fetch(apiUrl, { method: 'POST', body: JSON.stringify({ action: 'bulkEdit', data: result.value })});
-                loadData();
-                Swal.fire('สำเร็จ', 'อัปเดตนักเรียนทุกคนแล้ว', 'success');
-            }
-        });
     }
 
     function renderStudentList(filteredData = null) {
@@ -188,7 +135,7 @@
             const v = Object.values(s);
             const photo = v[18] && v[18].toString().startsWith('data') ? `<img src="${v[18]}">` : '👤';
             html += `<div class="std-card">
-                ${isAdmin ? `<button class="edit-btn-mini" onclick="editStudentInfo('${v[0]}')">⚙️</button>` : ''}
+                ${isAdmin ? `<button class="edit-btn-mini" onclick="editStudentBasic('${v[0]}')">✏️</button>` : ''}
                 <div class="std-photo">${photo}</div>
                 <div class="fw-bold" style="font-size:0.85rem;">${v[2]}</div>
                 <div class="small" style="color:var(--main-orange)">เหลือ ${v[16] || 0} ชม.</div>
@@ -197,7 +144,6 @@
         document.getElementById('displayArea').innerHTML = html + '</div>';
     }
 
-    // ฟังก์ชันอื่นๆ คงเดิม...
     function renderTeacherList(container) {
         let html = '<div class="px-3">';
         allTeachers.forEach(t => {
