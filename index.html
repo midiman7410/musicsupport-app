@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.01</title>
+    <title>Music Admin - V 0.1.03</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -30,11 +30,12 @@
         .stat-card { background: white; border-radius: 15px; padding: 15px; text-align: center; border-bottom: 4px solid var(--main-orange); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .update-badge { font-size: 0.65rem; color: #777; background: #f0f0f0; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-top: 8px; }
         .update-badge.active { color: #fff; background: #2ecc71; }
+        .subj-badge { font-size: 0.7rem; color: #555; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 5px; padding: 2px 5px; margin-top: 4px; display: inline-block; width: 100%; text-align: left;}
     </style>
 </head>
 <body>
 
-<div class="v-badge">V 0.1.01 | แก้ไขล่าสุด: 01/05/2026 13:10</div>
+<div class="v-badge">V 0.1.03 | แก้ไขล่าสุด: 01/05/2026 15:45</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -56,7 +57,8 @@
 </div>
 
 <script>
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbwW-IVLu6zPHeffeN59krB5cTszZsWaDdiIxln6HiOtZJGlSJ2a_xlU67Q_AotW0OXj/exec';
+    // ⚠️ อัปเดต API URL ใหม่ตามที่ส่งมาครับ
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbxW1ugc6azEqejp9iKAmWeO3OQ4qWZfskwX8tT1nl7YOfqy5TTNqZ-p_n9Iccrzj-AN/exec';
     const ADMIN_PIN = "1234"; 
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
 
@@ -95,6 +97,12 @@
             const photoData = getVal(s, 18); 
             const rawUpdate = getVal(s, 20); 
             
+            // ดึงข้อมูลวิชาเรียนที่ 1 และ 2
+            const subj1 = getVal(s, 21) || ""; // คอลัมน์ V
+            const time1 = getVal(s, 22) || ""; // คอลัมน์ W
+            const subj2 = getVal(s, 23) || ""; // คอลัมน์ X
+            const time2 = getVal(s, 24) || ""; // คอลัมน์ Y
+            
             let updateText = 'ยังไม่อัปเดต';
             let badgeClass = '';
             if (rawUpdate && rawUpdate.toString().includes('/')) {
@@ -105,12 +113,18 @@
             const photo = (photoData && (photoData.toString().startsWith('http') || photoData.toString().startsWith('data:image'))) 
                           ? `<img src="${photoData}">` : '👤';
             
+            // สร้างกล่องโชว์วิชาเรียน ถ้ามีข้อมูล
+            let subjHtml = '';
+            if (subj1 || time1) subjHtml += `<div class="subj-badge">📘 ${subj1} ${time1 ? `(${time1})` : ''}</div>`;
+            if (subj2 || time2) subjHtml += `<div class="subj-badge">📗 ${subj2} ${time2 ? `(${time2})` : ''}</div>`;
+            
             html += `<div class="std-card">
                 ${isAdmin ? `<button class="edit-btn-mini" onclick="editStudentBasic('${id}')">✏️</button>` : ''}
                 <div class="std-photo">${photo}</div>
                 <div class="fw-bold" style="font-size:0.85rem;">${name}</div>
                 <div class="small" style="color:var(--main-orange); font-weight:bold;">เหลือ ${remain || 0} ชม.</div>
-                <div class="small text-muted mt-1" style="font-size:0.75rem;">สิทธิ์ลา: ${leaveQuota || 0} ครั้ง</div>
+                <div class="small text-muted mb-1" style="font-size:0.75rem;">สิทธิ์ลา: ${leaveQuota || 0} ครั้ง</div>
+                ${subjHtml}
                 <div class="update-badge ${badgeClass}">⏱️ ${updateText}</div>
             </div>`;
         });
@@ -126,16 +140,23 @@
         const remain = getVal(s, 16) || 0;   
         const leaveQuota = getVal(s, 17) || 0; 
         const currentPhoto = getVal(s, 18);  
+        
+        const subj1 = getVal(s, 21) || ""; 
+        const time1 = getVal(s, 22) || ""; 
+        const subj2 = getVal(s, 23) || ""; 
+        const time2 = getVal(s, 24) || ""; 
 
         const { value: formValues } = await Swal.fire({
             title: `แก้ไขข้อมูลนักเรียน`,
             html: `
-                <div class="text-start">
+                <div class="text-start" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;">
                     <label class="small fw-bold">ชื่อ-นามสกุล</label>
-                    <input id="ed-fullname" class="swal2-input mt-1 mb-2" value="${fullName}">
+                    <input id="ed-fullname" class="swal2-input mt-1 mb-2" value="${fullName}" style="width: 90%;">
+                    
                     <label class="small fw-bold">ชื่อเล่น</label>
-                    <input id="ed-name" class="swal2-input mt-1 mb-2" value="${name}">
-                    <div class="row mt-2">
+                    <input id="ed-name" class="swal2-input mt-1 mb-2" value="${name}" style="width: 90%;">
+                    
+                    <div class="row mt-2 pe-3">
                         <div class="col-6">
                             <label class="small fw-bold">ชั่วโมงคงเหลือ</label>
                             <input id="ed-remain" type="number" class="form-control mt-1" value="${remain}">
@@ -145,8 +166,35 @@
                             <input id="ed-leave" type="number" class="form-control mt-1" value="${leaveQuota}">
                         </div>
                     </div>
-                    <label class="small fw-bold mt-3">อัปโหลดรูปภาพใหม่ (ปล่อยว่างถ้าไม่เปลี่ยน)</label>
-                    <input id="ed-photo" type="file" class="form-control mt-1" accept="image/*">
+                    
+                    <hr class="mt-3 mb-2">
+                    
+                    <div class="row pe-3">
+                        <div class="col-6">
+                            <label class="small fw-bold text-primary">วิชาเรียน 1</label>
+                            <input id="ed-subj1" type="text" class="form-control mt-1" value="${subj1}" placeholder="เช่น กีตาร์">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-primary">เวลาเรียน 1</label>
+                            <input id="ed-time1" type="text" class="form-control mt-1" value="${time1}" placeholder="เช่น ส. 10.00">
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-2 pe-3">
+                        <div class="col-6">
+                            <label class="small fw-bold text-success">วิชาเรียน 2</label>
+                            <input id="ed-subj2" type="text" class="form-control mt-1" value="${subj2}" placeholder="วิชาที่ 2 (ถ้ามี)">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-success">เวลาเรียน 2</label>
+                            <input id="ed-time2" type="text" class="form-control mt-1" value="${time2}" placeholder="เวลาที่ 2 (ถ้ามี)">
+                        </div>
+                    </div>
+
+                    <hr class="mt-3 mb-2">
+                    
+                    <label class="small fw-bold mt-2">อัปโหลดรูปภาพใหม่ (ปล่อยว่างถ้าไม่เปลี่ยน)</label>
+                    <input id="ed-photo" type="file" class="form-control mt-1 w-90" accept="image/*">
                     <div id="photo-preview" class="mt-3 text-center">
                         ${(currentPhoto && (currentPhoto.toString().startsWith('http') || currentPhoto.toString().startsWith('data:image'))) 
                             ? `<img src="${currentPhoto}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">` 
@@ -176,6 +224,10 @@
                         name: document.getElementById('ed-name').value,
                         remain: document.getElementById('ed-remain').value,
                         leaveQuota: document.getElementById('ed-leave').value,
+                        subject1: document.getElementById('ed-subj1').value,
+                        time1: document.getElementById('ed-time1').value,
+                        subject2: document.getElementById('ed-subj2').value,
+                        time2: document.getElementById('ed-time2').value,
                         photoBase64: null 
                     };
 
@@ -219,6 +271,10 @@
                         name: formValues.name,
                         remain: formValues.remain,
                         leaveQuota: formValues.leaveQuota,
+                        subject1: formValues.subject1,
+                        time1: formValues.time1,
+                        subject2: formValues.subject2,
+                        time2: formValues.time2,
                         photoBase64: formValues.photoBase64 
                     })
                 });
@@ -230,7 +286,6 @@
         }
     }
 
-    // 🌟 ระบบค้นหาครูแบบครอบจักรวาล 🌟
     function renderFullSchedule(container) {
         const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
         const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
@@ -250,19 +305,16 @@
 
                     if (teacherId) {
                         const lowerId = teacherId.toLowerCase();
-                        // สแกนหา T001 จากทุกๆ คอลัมน์ของชีทครู
                         const teacherObj = allTeachers.find(t => {
                             return Object.values(t).some(v => (v || "").toString().trim().toLowerCase() === lowerId);
                         });
 
-                        // ถ้าหาเจอ ให้ดึงคอลัมน์ชื่อมาโชว์แทน
                         if (teacherObj) {
                             const vals = Object.values(teacherObj).map(v => (v || "").toString().trim());
-                            const n2 = vals[2] || ""; // ลองดึงคอลัมน์ C (ชื่อเล่น)
-                            const n1 = vals[1] || ""; // ลองดึงคอลัมน์ B (ชื่อจริง)
-                            const n0 = vals[0] || ""; // ลองดึงคอลัมน์ A
+                            const n2 = vals[2] || ""; 
+                            const n1 = vals[1] || ""; 
+                            const n0 = vals[0] || ""; 
                             
-                            // เลือกข้อความที่ไม่ใช่รหัส T001 มาแสดงเป็นชื่อ
                             if (n2 && n2.toLowerCase() !== lowerId) teacherName = n2;
                             else if (n1 && n1.toLowerCase() !== lowerId) teacherName = n1;
                             else if (n0 && n0.toLowerCase() !== lowerId) teacherName = n0;
@@ -318,13 +370,12 @@
         renderStudentList(allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
     }
 
-    // ⚠️ เพิ่มระบบแจ้งเตือนถ้าหาข้อมูลครูไม่เจอ ⚠️
     function renderTeacherList(container) {
         if (allTeachers.length === 0) {
             container.innerHTML = `
                 <div class="alert alert-danger text-center m-3 shadow-sm">
                     <b>⚠️ ไม่พบฐานข้อมูลคุณครู</b><br>
-                    <small>ระบบไม่สามารถดึงข้อมูลครูได้ กรุณาตรวจสอบใน Google Sheets ว่ามีแท็บชื่อ <b>ข้อมูลคุณครู</b> (สะกดตรงเป๊ะ และไม่มีการเคาะ Spacebar ทิ้งไว้ด้านหลังชื่อแท็บครับ)</small>
+                    <small>ระบบไม่สามารถดึงข้อมูลครูได้ กรุณาตรวจสอบใน Google Sheets ว่ามีแท็บชื่อ <b>ข้อมูลคุณครู</b></small>
                 </div>`;
             return;
         }
