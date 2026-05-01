@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.0.90</title>
+    <title>Music Admin - V 0.0.91</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -32,7 +32,7 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.90</div>
+<div class="v-badge">V 0.0.91</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -54,7 +54,6 @@
 </div>
 
 <script>
-    // URL ที่พี่เพิ่งส่งมาล่าสุด (มีระบบ doGet เพื่อโหลดข้อมูลแล้ว)
     const apiUrl = 'https://script.google.com/macros/s/AKfycbxv0hP1NUTNOET06xjbgQZZcDFJ1ApiyG7PfN6KjR0ui6vjqvMI4yQ93TfWHRWur8lN/exec';
     const ADMIN_PIN = "1234"; 
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
@@ -93,7 +92,6 @@
             const name = getVal(s, 2); 
             const remain = getVal(s, 16); 
             const photoData = getVal(s, 18); 
-            // ตรวจสอบว่ารูปภาพเป็น Base64 หรือ URL ปกติ
             const photo = (photoData && (photoData.toString().startsWith('http') || photoData.toString().startsWith('data:image'))) 
                           ? `<img src="${photoData}">` : '👤';
             
@@ -111,10 +109,10 @@
         const s = allStudents.find(x => getVal(x, 0) == sId);
         if (!s) return;
         
-        const fullName = getVal(s, 1) || ""; // คอลัมน์ B ชื่อ-นามสกุล
-        const name = getVal(s, 2) || "";     // คอลัมน์ C ชื่อเล่น
-        const remain = getVal(s, 16) || 0;   // คอลัมน์ Q ชั่วโมงคงเหลือ
-        const currentPhoto = getVal(s, 18);  // คอลัมน์ S รูปภาพเดิม
+        const fullName = getVal(s, 1) || ""; 
+        const name = getVal(s, 2) || "";     
+        const remain = getVal(s, 16) || 0;   
+        const currentPhoto = getVal(s, 18);  
 
         const { value: formValues } = await Swal.fire({
             title: `แก้ไขข้อมูลนักเรียน`,
@@ -141,7 +139,6 @@
             confirmButtonText: 'บันทึก',
             confirmButtonColor: '#ff6600',
             didOpen: () => {
-                // ระบบพรีวิวรูปภาพเมื่อเลือกไฟล์ใหม่
                 document.getElementById('ed-photo').addEventListener('change', function(e) {
                     const file = e.target.files[0];
                     if (file) {
@@ -160,17 +157,45 @@
                         fullName: document.getElementById('ed-fullname').value,
                         name: document.getElementById('ed-name').value,
                         remain: document.getElementById('ed-remain').value,
-                        photoBase64: null // ค่าเริ่มต้นถ้าไม่มีการเปลี่ยนรูป
+                        photoBase64: null 
                     };
 
-                    // ถ้ามีการเลือกไฟล์ใหม่ ให้แปลงเป็น Base64
                     if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            returnData.photoBase64 = e.target.result;
-                            resolve(returnData);
+                            // --- ระบบย่อขนาดรูปภาพ (Image Compression) ---
+                            const img = new Image();
+                            img.onload = function() {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 300; // กำหนดความกว้างสูงสุด 300px
+                                const MAX_HEIGHT = 300; // กำหนดความสูงสูงสุด 300px
+                                let width = img.width;
+                                let height = img.height;
+
+                                if (width > height) {
+                                    if (width > MAX_WIDTH) {
+                                        height *= MAX_WIDTH / width;
+                                        width = MAX_WIDTH;
+                                    }
+                                } else {
+                                    if (height > MAX_HEIGHT) {
+                                        width *= MAX_HEIGHT / height;
+                                        height = MAX_HEIGHT;
+                                    }
+                                }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                
+                                // แปลงกลับเป็น Base64 แบบ JPEG พร้อมลดคุณภาพเหลือ 70% เพื่อให้ไฟล์เล็กที่สุด
+                                returnData.photoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+                                resolve(returnData);
+                            };
+                            img.src = e.target.result;
                         };
-                        reader.readAsDataURL(fileInput.files[0]);
+                        reader.readAsDataURL(file);
                     } else {
                         resolve(returnData);
                     }
@@ -181,7 +206,6 @@
         if (formValues) {
             Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
-                // ส่งข้อมูลไปที่ Apps Script
                 await fetch(apiUrl, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -191,11 +215,10 @@
                         fullName: formValues.fullName,
                         name: formValues.name,
                         remain: formValues.remain,
-                        photoBase64: formValues.photoBase64 // ส่งรูปภาพ (ถ้ามี)
+                        photoBase64: formValues.photoBase64 
                     })
                 });
                 
-                // รอสักพักให้ Google Sheets บันทึกข้อมูลเสร็จ
                 setTimeout(async () => {
                     await loadData();
                     Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
