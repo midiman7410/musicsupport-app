@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.0.97</title>
+    <title>Music Admin - V 0.0.99</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --main-orange: #ff6600; --teacher-blue: #007bff; --bg-light: #f8f9fa; }
         body { background: var(--bg-light); font-family: 'Sarabun', sans-serif; padding-bottom: 70px; }
-        
-        /* ป้าย V บอกเวอร์ชันและเวลาที่แก้ไขโค้ดล่าสุด */
         .v-badge { position: fixed; top: 10px; right: 10px; background: #333; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; z-index: 9999; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: 1px solid var(--main-orange); }
-        
         .nav-pills { justify-content: center; background: #fff; border-radius: 50px; padding: 5px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; }
         .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.85rem; border: none !important; padding: 8px 15px; }
         .nav-link.active { background-color: var(--main-orange) !important; color: white !important; }
@@ -37,7 +34,7 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.97 | แก้ไขล่าสุด: 01/05/2026 12:45</div>
+<div class="v-badge">V 0.0.99 | แก้ไขล่าสุด: 01/05/2026 12:51</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -59,7 +56,8 @@
 </div>
 
 <script>
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbzwpi2whyWwMrf7cc68P-GS9UaXk3iXGgilSEvO_aH9E7kkyW8r91aCPfF8waoN5v1d/exec';
+    // URL ใหม่สุดของพี่
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbwW-IVLu6zPHeffeN59krB5cTszZsWaDdiIxln6HiOtZJGlSJ2a_xlU67Q_AotW0OXj/exec';
     const ADMIN_PIN = "1234"; 
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
 
@@ -148,7 +146,7 @@
                             <input id="ed-leave" type="number" class="form-control mt-1" value="${leaveQuota}">
                         </div>
                     </div>
-                    <label class="small fw-bold mt-3">อัปโหลดรูปภาพใหม่</label>
+                    <label class="small fw-bold mt-3">อัปโหลดรูปภาพใหม่ (ปล่อยว่างถ้าไม่เปลี่ยน)</label>
                     <input id="ed-photo" type="file" class="form-control mt-1" accept="image/*">
                     <div id="photo-preview" class="mt-3 text-center">
                         ${(currentPhoto && (currentPhoto.toString().startsWith('http') || currentPhoto.toString().startsWith('data:image'))) 
@@ -246,8 +244,9 @@
                 h += '<td>';
                 matches.forEach(m => {
                     const studentName = getVal(m, 2);
-                    const teacherId = getVal(m, 19);
-                    const teacherObj = allTeachers.find(t => getVal(t, 0) == teacherId);
+                    // ตัดช่องว่างทิ้งก่อนจับคู่กันเหนียว
+                    const teacherId = (getVal(m, 19) || "").toString().trim();
+                    const teacherObj = allTeachers.find(t => (getVal(t, 0) || "").toString().trim() === teacherId);
                     const teacherName = teacherObj ? getVal(teacherObj, 2) : '?';
                     h += `<div class="class-box"><b>${studentName}</b><br><small class="text-primary">ครู${teacherName}</small></div>`;
                 });
@@ -302,10 +301,13 @@
         let html = '<div class="px-3">';
         allTeachers.forEach(t => {
             const name = getVal(t, 2);
-            const id = getVal(t, 0);
+            const id = (getVal(t, 0) || "").toString().trim();
+            // ป้องกันเรื่องนับจำนวนเด็กต่อครูผิดพลาดด้วยการตัดช่องว่าง
+            const studentCount = allStudents.filter(s => (getVal(s, 19) || "").toString().trim() === id).length;
+            
             html += `<div class="p-3 mb-2 bg-white rounded shadow-sm border-start border-primary border-4 d-flex justify-content-between align-items-center">
                 <div class="fw-bold">ครู${name}</div>
-                <span class="badge bg-primary rounded-pill">${allStudents.filter(s => getVal(s, 19) == id).length} คน</span>
+                <span class="badge bg-primary rounded-pill">${studentCount} คน</span>
             </div>`;
         });
         container.innerHTML = html + '</div>';
