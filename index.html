@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.0.99</title>
+    <title>Music Admin - V 0.1.00</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -34,7 +34,7 @@
 </head>
 <body>
 
-<div class="v-badge">V 0.0.99 | แก้ไขล่าสุด: 01/05/2026 12:51</div>
+<div class="v-badge">V 0.1.00 | แก้ไขล่าสุด: 01/05/2026 13:00</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -56,7 +56,7 @@
 </div>
 
 <script>
-    // URL ใหม่สุดของพี่
+    // ใช้ API URL ตัวล่าสุดของพี่
     const apiUrl = 'https://script.google.com/macros/s/AKfycbwW-IVLu6zPHeffeN59krB5cTszZsWaDdiIxln6HiOtZJGlSJ2a_xlU67Q_AotW0OXj/exec';
     const ADMIN_PIN = "1234"; 
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
@@ -231,6 +231,7 @@
         }
     }
 
+    // 🌟 ส่วนนี้รื้อระบบค้นหาครูใหม่ทั้งหมด กันเหนียว 100% 🌟
     function renderFullSchedule(container) {
         const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
         const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
@@ -244,10 +245,28 @@
                 h += '<td>';
                 matches.forEach(m => {
                     const studentName = getVal(m, 2);
-                    // ตัดช่องว่างทิ้งก่อนจับคู่กันเหนียว
-                    const teacherId = (getVal(m, 19) || "").toString().trim();
-                    const teacherObj = allTeachers.find(t => (getVal(t, 0) || "").toString().trim() === teacherId);
-                    const teacherName = teacherObj ? getVal(teacherObj, 2) : '?';
+                    
+                    // ดึงค่าครูที่กรอกในชีทนักเรียน คอลัมน์ T (Index 19)
+                    const rawTeacherVal = (getVal(m, 19) || "").toString().trim();
+                    const searchKey = rawTeacherVal.toLowerCase();
+                    
+                    // ให้ค่าเริ่มต้นเป็นสิ่งที่กรอกมาเลย ถ้าว่างค่อยให้ขึ้น ?
+                    let teacherName = rawTeacherVal || '?';
+
+                    if (searchKey) {
+                        // หาครูจาก ID (A), ชื่อจริง (B), หรือชื่อเล่น (C)
+                        const teacherObj = allTeachers.find(t => 
+                            (getVal(t, 0) || "").toString().trim().toLowerCase() === searchKey ||
+                            (getVal(t, 1) || "").toString().trim().toLowerCase() === searchKey ||
+                            (getVal(t, 2) || "").toString().trim().toLowerCase() === searchKey
+                        );
+                        
+                        // ถ้าเจอในฐานข้อมูล ให้ดึงชื่อเล่นหรือชื่อจริงมาแสดง
+                        if (teacherObj) {
+                            teacherName = getVal(teacherObj, 2) || getVal(teacherObj, 1) || rawTeacherVal;
+                        }
+                    }
+
                     h += `<div class="class-box"><b>${studentName}</b><br><small class="text-primary">ครู${teacherName}</small></div>`;
                 });
                 h += '</td>';
@@ -300,10 +319,19 @@
     function renderTeacherList(container) {
         let html = '<div class="px-3">';
         allTeachers.forEach(t => {
-            const name = getVal(t, 2);
-            const id = (getVal(t, 0) || "").toString().trim();
-            // ป้องกันเรื่องนับจำนวนเด็กต่อครูผิดพลาดด้วยการตัดช่องว่าง
-            const studentCount = allStudents.filter(s => (getVal(s, 19) || "").toString().trim() === id).length;
+            const name = getVal(t, 2) || getVal(t, 1);
+            
+            // ปรับการนับให้สอดคล้องกับระบบค้นหาครูแบบใหม่
+            const searchKey1 = (getVal(t, 0) || "").toString().trim().toLowerCase();
+            const searchKey2 = (getVal(t, 1) || "").toString().trim().toLowerCase();
+            const searchKey3 = (getVal(t, 2) || "").toString().trim().toLowerCase();
+            
+            const studentCount = allStudents.filter(s => {
+                const sTeacher = (getVal(s, 19) || "").toString().trim().toLowerCase();
+                return (searchKey1 && sTeacher === searchKey1) || 
+                       (searchKey2 && sTeacher === searchKey2) || 
+                       (searchKey3 && sTeacher === searchKey3);
+            }).length;
             
             html += `<div class="p-3 mb-2 bg-white rounded shadow-sm border-start border-primary border-4 d-flex justify-content-between align-items-center">
                 <div class="fw-bold">ครู${name}</div>
