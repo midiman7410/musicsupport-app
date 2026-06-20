@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.04</title>
+    <title>Music Admin - V 0.1.07</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -30,12 +30,12 @@
         .stat-card { background: white; border-radius: 15px; padding: 15px; text-align: center; border-bottom: 4px solid var(--main-orange); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .update-badge { font-size: 0.65rem; color: #777; background: #f0f0f0; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-top: 8px; }
         .update-badge.active { color: #fff; background: #2ecc71; }
-        .subj-badge { font-size: 0.7rem; color: #555; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 5px; padding: 4px; margin-top: 4px; display: inline-block; width: 100%; text-align: left; line-height: 1.4;}
+        .subj-badge { font-size: 0.75rem; color: #555; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 5px; padding: 6px; margin-top: 4px; display: inline-block; width: 100%; text-align: left; line-height: 1.5;}
     </style>
 </head>
 <body>
 
-<div class="v-badge">V 0.1.04 | แก้ไขล่าสุด: 01/05/2026 16:15</div>
+<div class="v-badge">V 0.1.07 | แก้ไขล่าสุด: 01/05/2026 18:30</div>
 
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
@@ -57,7 +57,7 @@
 </div>
 
 <script>
-    // ⚠️ เอา URL ใหม่มาใส่ตรงนี้เหมือนเดิมครับ
+    // 🌟 API URL ลิงก์ใหม่ล่าสุดครับ
     const apiUrl = 'https://script.google.com/macros/s/AKfycby55M-VeFb14PV-PapzXdKOncRW6BHqtuTcNxP3LP-T3nBQ45K50nI-x5c2AYQ5yb-h/exec';
     const ADMIN_PIN = "1234"; 
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
@@ -92,314 +92,11 @@
         list.forEach(s => {
             const id = getVal(s, 0);
             const name = getVal(s, 2); 
-            const remain = getVal(s, 16); 
+            const remain = getVal(s, 16); // ชม. วิชา 1 (คอลัมน์ Q)
+            const remain2 = getVal(s, 21); // ชม. วิชา 2 (คอลัมน์ V)
             const leaveQuota = getVal(s, 17); 
             const photoData = getVal(s, 18); 
             const rawUpdate = getVal(s, 20); 
             
-            // 🌟 ดึงข้อมูลจากคอลัมน์ I, J, K (Index 8, 9, 10)
-            const subj1 = getVal(s, 8) || ""; // คอลัมน์ I
-            const subj2 = getVal(s, 9) || ""; // คอลัมน์ J
-            const time = getVal(s, 10) || ""; // คอลัมน์ K (เวลาเรียนรวม)
-            
-            let updateText = 'ยังไม่อัปเดต';
-            let badgeClass = '';
-            if (rawUpdate && rawUpdate.toString().includes('/')) {
-                updateText = rawUpdate;
-                badgeClass = 'active'; 
-            }
-            
-            const photo = (photoData && (photoData.toString().startsWith('http') || photoData.toString().startsWith('data:image'))) 
-                          ? `<img src="${photoData}">` : '👤';
-            
-            // สร้างกล่องโชว์วิชาเรียนและเวลา
-            let subjHtml = '';
-            if (subj1 || subj2 || time) {
-                subjHtml = `<div class="subj-badge">
-                    ${subj1 ? `📘 ${subj1}` : ''} ${subj2 ? ` & 📗 ${subj2}` : ''}
-                    ${time ? `<br>⏰ ${time}` : ''}
-                </div>`;
-            }
-            
-            html += `<div class="std-card">
-                ${isAdmin ? `<button class="edit-btn-mini" onclick="editStudentBasic('${id}')">✏️</button>` : ''}
-                <div class="std-photo">${photo}</div>
-                <div class="fw-bold" style="font-size:0.85rem;">${name}</div>
-                <div class="small" style="color:var(--main-orange); font-weight:bold;">เหลือ ${remain || 0} ชม.</div>
-                <div class="small text-muted mb-1" style="font-size:0.75rem;">สิทธิ์ลา: ${leaveQuota || 0} ครั้ง</div>
-                ${subjHtml}
-                <div class="update-badge ${badgeClass}">⏱️ ${updateText}</div>
-            </div>`;
-        });
-        document.getElementById('displayArea').innerHTML = html + '</div>';
-    }
-
-    async function editStudentBasic(sId) {
-        const s = allStudents.find(x => getVal(x, 0) == sId);
-        if (!s) return;
-        
-        const fullName = getVal(s, 1) || ""; 
-        const name = getVal(s, 2) || "";     
-        const remain = getVal(s, 16) || 0;   
-        const leaveQuota = getVal(s, 17) || 0; 
-        const currentPhoto = getVal(s, 18);  
-        
-        const subj1 = getVal(s, 8) || ""; // คอลัมน์ I
-        const subj2 = getVal(s, 9) || ""; // คอลัมน์ J
-        const time = getVal(s, 10) || ""; // คอลัมน์ K
-
-        const { value: formValues } = await Swal.fire({
-            title: `แก้ไขข้อมูลนักเรียน`,
-            html: `
-                <div class="text-start" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;">
-                    <label class="small fw-bold">ชื่อ-นามสกุล</label>
-                    <input id="ed-fullname" class="swal2-input mt-1 mb-2" value="${fullName}" style="width: 90%;">
-                    
-                    <label class="small fw-bold">ชื่อเล่น</label>
-                    <input id="ed-name" class="swal2-input mt-1 mb-2" value="${name}" style="width: 90%;">
-                    
-                    <div class="row mt-2 pe-3">
-                        <div class="col-6">
-                            <label class="small fw-bold">ชั่วโมงคงเหลือ</label>
-                            <input id="ed-remain" type="number" class="form-control mt-1" value="${remain}">
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-bold">โควต้าการลา</label>
-                            <input id="ed-leave" type="number" class="form-control mt-1" value="${leaveQuota}">
-                        </div>
-                    </div>
-                    
-                    <hr class="mt-3 mb-2">
-                    
-                    <div class="row pe-3">
-                        <div class="col-6">
-                            <label class="small fw-bold text-primary">วิชาเรียน 1</label>
-                            <input id="ed-subj1" type="text" class="form-control mt-1" value="${subj1}" placeholder="เช่น กีตาร์">
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-bold text-success">วิชาเรียน 2</label>
-                            <input id="ed-subj2" type="text" class="form-control mt-1" value="${subj2}" placeholder="วิชาที่ 2 (ถ้ามี)">
-                        </div>
-                    </div>
-                    
-                    <div class="row pe-3 mt-2">
-                        <div class="col-12">
-                            <label class="small fw-bold text-danger">เวลาเรียน (รวม)</label>
-                            <input id="ed-time" type="text" class="form-control mt-1" value="${time}" placeholder="เช่น ส. 10.00 - 12.00">
-                        </div>
-                    </div>
-
-                    <hr class="mt-3 mb-2">
-                    
-                    <label class="small fw-bold mt-2">อัปโหลดรูปภาพใหม่</label>
-                    <input id="ed-photo" type="file" class="form-control mt-1 w-90" accept="image/*">
-                    <div id="photo-preview" class="mt-3 text-center">
-                        ${(currentPhoto && (currentPhoto.toString().startsWith('http') || currentPhoto.toString().startsWith('data:image'))) 
-                            ? `<img src="${currentPhoto}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">` 
-                            : ''}
-                    </div>
-                </div>`,
-            showCancelButton: true,
-            confirmButtonText: 'บันทึก',
-            confirmButtonColor: '#ff6600',
-            didOpen: () => {
-                document.getElementById('ed-photo').addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(ev) {
-                            document.getElementById('photo-preview').innerHTML = `<img src="${ev.target.result}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid var(--main-orange);">`;
-                        }
-                        reader.readAsDataURL(file);
-                    }
-                });
-            },
-            preConfirm: () => {
-                const fileInput = document.getElementById('ed-photo');
-                return new Promise((resolve) => {
-                    const returnData = {
-                        fullName: document.getElementById('ed-fullname').value,
-                        name: document.getElementById('ed-name').value,
-                        remain: document.getElementById('ed-remain').value,
-                        leaveQuota: document.getElementById('ed-leave').value,
-                        subject1: document.getElementById('ed-subj1').value,
-                        subject2: document.getElementById('ed-subj2').value,
-                        time: document.getElementById('ed-time').value,
-                        photoBase64: null 
-                    };
-
-                    if (fileInput.files.length > 0) {
-                        const file = fileInput.files[0];
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const img = new Image();
-                            img.onload = function() {
-                                const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 300; 
-                                const MAX_HEIGHT = 300; 
-                                let width = img.width;
-                                let height = img.height;
-                                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
-                                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                                canvas.width = width; canvas.height = height;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, width, height);
-                                returnData.photoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
-                                resolve(returnData);
-                            };
-                            img.src = e.target.result;
-                        };
-                        reader.readAsDataURL(file);
-                    } else { resolve(returnData); }
-                });
-            }
-        });
-        
-        if (formValues) {
-            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            try {
-                await fetch(apiUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ 
-                        action: 'editStudentBasic', 
-                        studentId: sId,
-                        fullName: formValues.fullName,
-                        name: formValues.name,
-                        remain: formValues.remain,
-                        leaveQuota: formValues.leaveQuota,
-                        subject1: formValues.subject1,
-                        subject2: formValues.subject2,
-                        time: formValues.time,
-                        photoBase64: formValues.photoBase64 
-                    })
-                });
-                setTimeout(async () => {
-                    await loadData();
-                    Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
-                }, 2000);
-            } catch (err) { Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error'); }
-        }
-    }
-
-    function renderFullSchedule(container) {
-        const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-        const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
-        let h = '<div class="table-responsive"><table class="table-timetable"><thead><tr><th class="th-day">วัน/เวลา</th>';
-        times.forEach(t => h += `<th class="th-time">${t}</th>`);
-        h += '</tr></thead><tbody>';
-        days.forEach(day => {
-            h += `<tr><td class="th-day">${day}</td>`;
-            times.forEach(slot => {
-                const matches = allStudents.filter(s => (getVal(s, 14) || "").includes(day) && (getVal(s, 15) || "").startsWith(slot.split(':')[0]));
-                h += '<td>';
-                matches.forEach(m => {
-                    const studentName = getVal(m, 2);
-                    
-                    const teacherId = (getVal(m, 19) || "").toString().trim();
-                    let teacherName = teacherId || '?';
-
-                    if (teacherId) {
-                        const lowerId = teacherId.toLowerCase();
-                        const teacherObj = allTeachers.find(t => {
-                            return Object.values(t).some(v => (v || "").toString().trim().toLowerCase() === lowerId);
-                        });
-
-                        if (teacherObj) {
-                            const vals = Object.values(teacherObj).map(v => (v || "").toString().trim());
-                            const n2 = vals[2] || ""; 
-                            const n1 = vals[1] || ""; 
-                            const n0 = vals[0] || ""; 
-                            
-                            if (n2 && n2.toLowerCase() !== lowerId) teacherName = n2;
-                            else if (n1 && n1.toLowerCase() !== lowerId) teacherName = n1;
-                            else if (n0 && n0.toLowerCase() !== lowerId) teacherName = n0;
-                        }
-                    }
-
-                    h += `<div class="class-box"><b>${studentName}</b><br><small class="text-primary">ครู${teacherName}</small></div>`;
-                });
-                h += '</td>';
-            });
-            h += '</tr>';
-        });
-        container.innerHTML = h + '</tbody></table></div>';
-    }
-
-    function switchPage(p) {
-        currentPage = p;
-        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-        const nav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
-        if(nav) nav.classList.add('active');
-        document.getElementById('searchBox').style.display = (p === 'student') ? 'block' : 'none';
-        renderDisplay();
-    }
-
-    async function checkAdminAuth() {
-        if (isAdmin) { switchPage('overview'); return; }
-        const { value: password } = await Swal.fire({
-            title: 'รหัสผ่านแอดมิน',
-            input: 'password',
-            inputPlaceholder: 'กรอก PIN 4 หลัก',
-            showCancelButton: true,
-            confirmButtonColor: '#ff6600'
-        });
-        if (password === ADMIN_PIN) { isAdmin = true; switchPage('overview'); }
-        else if (password) { Swal.fire('รหัสผ่านไม่ถูกต้อง', '', 'error'); }
-    }
-
-    function renderOverview(container) {
-        container.innerHTML = `
-            <div class="px-3">
-                <div class="row g-3">
-                    <div class="col-6"><div class="stat-card">นักเรียน<div class="h2 fw-bold">${allStudents.length}</div></div></div>
-                    <div class="col-6"><div class="stat-card">คุณครู<div class="h2 fw-bold text-primary">${allTeachers.length}</div></div></div>
-                </div>
-                <div class="mt-4 p-3 bg-white rounded shadow-sm text-center">
-                    <button class="btn btn-sm w-100 btn-outline-secondary" onclick="isAdmin=false; switchPage('student');">🔒 ล็อคระบบแอดมิน</button>
-                </div>
-            </div>`;
-    }
-
-    function handleSearch() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        renderStudentList(allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
-    }
-
-    function renderTeacherList(container) {
-        if (allTeachers.length === 0) {
-            container.innerHTML = `
-                <div class="alert alert-danger text-center m-3 shadow-sm">
-                    <b>⚠️ ไม่พบฐานข้อมูลคุณครู</b><br>
-                    <small>ระบบไม่สามารถดึงข้อมูลครูได้ กรุณาตรวจสอบใน Google Sheets ว่ามีแท็บชื่อ <b>ข้อมูลคุณครู</b></small>
-                </div>`;
-            return;
-        }
-
-        let html = '<div class="px-3">';
-        allTeachers.forEach(t => {
-            const vals = Object.values(t).map(v => (v || "").toString().trim());
-            const n2 = vals[2] || ""; 
-            const n1 = vals[1] || ""; 
-            const n0 = vals[0] || ""; 
-            let name = n2 || n1 || n0;
-            
-            const searchKeys = vals.filter(v => v).map(v => v.toLowerCase());
-            
-            const studentCount = allStudents.filter(s => {
-                const sTeacher = (getVal(s, 19) || "").toString().trim().toLowerCase();
-                return sTeacher && searchKeys.includes(sTeacher);
-            }).length;
-            
-            html += `<div class="p-3 mb-2 bg-white rounded shadow-sm border-start border-primary border-4 d-flex justify-content-between align-items-center">
-                <div class="fw-bold">ครู${name}</div>
-                <span class="badge bg-primary rounded-pill">${studentCount} คน</span>
-            </div>`;
-        });
-        container.innerHTML = html + '</div>';
-    }
-
-    loadData();
-</script>
-</body>
-</html>
+            const subj1 = getVal(s, 8) || ""; // วิชา 1 (คอลัมน์ I)
+            const subj2 = getVal(s, 9) || ""; // วิชา 2 (
