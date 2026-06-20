@@ -125,7 +125,7 @@
     // ══════════════════════════════════════════
     // ⚙️ CONFIGURATION
     // ══════════════════════════════════════════
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbyFCyg4GNHDUPhxQT9v9lRzcUag7t-H9y8LgelvNG9SknnVzELJ68zQWIv9WBXg92Sa/exec';
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbwVNCOUTD_Tqtk3SBEup81DIL8Zn1g1zxTnfAmlR1eFHTcRhPa06Q6oehgC6kKuEWDW/exec';
 
     // ⚠️ เปลี่ยน PHONE_COL_INDEX ให้ตรงกับ column เบอร์โทรใน Sheet "ข้อมูลคุณครู"
     // (นับจาก 0: A=0, B=1, C=2, D=3, E=4, ...)
@@ -195,14 +195,6 @@
 
         if (!phone) { showLoginMsg('กรุณากรอกเบอร์โทรศัพท์'); return; }
         if (!dataLoaded) { showLoginMsg('ข้อมูลยังโหลดไม่เสร็จ กรุณารอสักครู่...'); return; }
-
-        // 🔍 DEBUG — ลบทิ้งหลังแก้เสร็จ
-        const debugInfo = allTeachers.map((t,i) => {
-            const vals = Array.isArray(t) ? t : Object.values(t);
-            return `[${i}] col3="${vals[3]}"`;
-        }).join(' | ');
-        showLoginMsg(`👁 ครู ${allTeachers.length} คน | ${debugInfo} | phone="${phone}"`);
-        return;
 
         // ── ตรวจ Admin ──────────────────────────────
         if (phone === ADMIN_PHONE) {
