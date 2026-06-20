@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.15</title>
+    <title>Music Admin - V 0.1.16 · 20/06/26</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -43,7 +43,7 @@
     </style>
 </head>
 <body>
-<div class="v-badge">V 0.1.15</div>
+<div class="v-badge">V 0.1.16 · 20/06/26</div>
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
 
@@ -500,13 +500,17 @@
             confirmButtonColor: '#28a745',
             cancelButtonText: 'ยกเลิก',
             didOpen: () => {
-                // Toggle: กดซ้ำเพื่อยกเลิกการเลือก
-                document.querySelectorAll('.btn-check').forEach(radio => {
-                    radio.addEventListener('mousedown', function() {
-                        this._wasChecked = this.checked;
-                    });
-                    radio.addEventListener('click', function() {
-                        if (this._wasChecked) this.checked = false;
+                // Toggle: กดซ้ำเพื่อยกเลิกการเลือก (รองรับ mobile + desktop)
+                document.querySelectorAll('.btn-group label').forEach(label => {
+                    const saveState = function() {
+                        const radio = document.getElementById(label.htmlFor);
+                        if (radio) label._wasChecked = radio.checked;
+                    };
+                    label.addEventListener('mousedown', saveState);
+                    label.addEventListener('touchstart', saveState, { passive: true });
+                    label.addEventListener('click', function() {
+                        const radio = document.getElementById(this.htmlFor);
+                        if (radio && this._wasChecked) radio.checked = false;
                     });
                 });
             },
