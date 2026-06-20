@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.19 · 20/06/26</title>
+    <title>Music Admin - V 0.1.20 · 20/06/26</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -96,7 +96,7 @@
 </div>
 
 <!-- ───── Main App ───── -->
-<div class="v-badge">V 0.1.19 · 20/06/26</div>
+<div class="v-badge">V 0.1.20 · 20/06/26</div>
 
 <div class="user-bar" id="userBar" style="display:none;">
     <span class="user-name-chip" id="currentUserBadge">-</span>
@@ -125,7 +125,7 @@
     // ══════════════════════════════════════════
     // ⚙️ CONFIGURATION
     // ══════════════════════════════════════════
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbz-zT7e1Xfg9ipIR18nH2bN0WZV3kjDv_Ku1_pqMVa0FbsElEmfg58Iqe-lWEmum99e/exec';
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbyFCyg4GNHDUPhxQT9v9lRzcUag7t-H9y8LgelvNG9SknnVzELJ68zQWIv9WBXg92Sa/exec';
 
     // ⚠️ เปลี่ยน PHONE_COL_INDEX ให้ตรงกับ column เบอร์โทรใน Sheet "ข้อมูลคุณครู"
     // (นับจาก 0: A=0, B=1, C=2, D=3, E=4, ...)
@@ -150,8 +150,18 @@
     let currentUser = null;        // 'admin' | 't001' | 't002' | ...
     let allStudents = [];
     let allTeachers = [];
+    let allLogs     = [];          // ประวัติการสอน จาก sheet "ประวัติการสอน"
     let currentPage = 'student';
     let dataLoaded = false;
+
+    // ── ชื่อเดือนภาษาไทย (พ.ศ.) ────────────────────
+    const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                         'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    function thaiMonthLabel(mmYyyy) {
+        // mmYyyy = "06/2026"
+        const [mm, yyyy] = mmYyyy.split('/');
+        return `${THAI_MONTHS[parseInt(mm,10)-1]} ${parseInt(yyyy)+543}`;
+    }
 
     // ══════════════════════════════════════════
     // 🔄 Load data
@@ -164,6 +174,7 @@
             const data = await res.json();
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
+            allLogs     = data.logs     || [];
             dataLoaded = true;
             document.getElementById('loginLoading').style.display = 'none';
             document.getElementById('loginBtn').disabled = false;
@@ -548,6 +559,7 @@
             const btnHtml = canMark
                 ? `<button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="markAttendance('${code}')">📋 ลงชื่อนักเรียน</button>`
                 : `<button class="btn btn-sm btn-outline-secondary w-100 mt-2" disabled title="ลงชื่อได้เฉพาะนักเรียนของตัวเอง">📋 ลงชื่อนักเรียน</button>`;
+            const profileBtn = `<button class="btn btn-sm btn-outline-primary w-100 mt-1" onclick="showTeacherProfile('${code}','${name}')">📊 ประวัติการสอน</button>`;
 
             html += `
                 <div class="${cardClass}">
@@ -556,6 +568,7 @@
                     <div class="teacher-count">${students.length} คน</div>
                     <div class="teacher-students">${studentListHtml}</div>
                     ${btnHtml}
+                    ${profileBtn}
                 </div>`;
         });
         html += '</div>';
@@ -707,6 +720,7 @@
             const data = await res.json();
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
+            allLogs     = data.logs     || [];
             renderDisplay();
         } catch (e) {
             console.error(e);
@@ -739,6 +753,120 @@
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
         renderStudentList(allStudents.filter(s => (Array.isArray(s) ? s : Object.values(s)).join(' ').toLowerCase().includes(term)));
+    }
+
+    // ══════════════════════════════════════════
+    // 📊 Teacher Profile — ประวัติการสอนรายรอบ
+    // ══════════════════════════════════════════
+    function showTeacherProfile(teacherCode, teacherName) {
+        const now = new Date();
+
+        // เดือนปัจจุบันและเดือนก่อน (MM/yyyy)
+        const curM  = now.getMonth();          // 0-11
+        const curY  = now.getFullYear();
+        const prevM = curM === 0 ? 11 : curM - 1;
+        const prevY = curM === 0 ? curY - 1 : curY;
+        const pad   = n => String(n).padStart(2, '0');
+        const curMY  = `${pad(curM + 1)}/${curY}`;
+        const prevMY = `${pad(prevM + 1)}/${prevY}`;
+
+        // กรอง log ของครูคนนี้
+        const myLogs = allLogs.filter(log => {
+            const lTeacher = (getVal(log, 2) || '').toString().trim().toLowerCase();
+            return lTeacher === teacherCode.toLowerCase();
+        });
+
+        // นับชั่วโมงสอน: เฉพาะ status === 'present'
+        function countHours(logs, monthYear, period) {
+            return logs.filter(l =>
+                (getVal(l, 8) || '') === monthYear &&
+                (getVal(l, 7) || '') === period &&
+                (getVal(l, 5) || '') === 'present'
+            ).length;
+        }
+
+        // ชั่วโมงแต่ละรอบ
+        const cur1  = countHours(myLogs, curMY, '1-15');
+        const cur2  = countHours(myLogs, curMY, '16-end');
+        const prev1 = countHours(myLogs, prevMY, '1-15');
+        const prev2 = countHours(myLogs, prevMY, '16-end');
+
+        // ประวัติล่าสุดเดือนนี้ (20 รายการ)
+        const recentLogs = myLogs
+            .filter(l => (getVal(l, 8) || '') === curMY)
+            .slice(-20).reverse();
+
+        const statusLabel = { present: '✅ เข้าเรียน', leave: '📋 ลา', absent: '❌ ขาด' };
+
+        const recentHtml = recentLogs.length > 0
+            ? recentLogs.map(l => {
+                const date    = getVal(l, 0) || '';
+                const time    = getVal(l, 1) || '';
+                const sName   = getVal(l, 4) || '';
+                const status  = getVal(l, 5) || '';
+                const note    = getVal(l, 6) || '';
+                const statusTxt = statusLabel[status] || status;
+                return `<div style="padding:6px 0; border-bottom:1px solid #f0f0f0; font-size:0.8rem;">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">${sName}</span>
+                        <span class="text-muted">${date} ${time}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <span>${statusTxt}</span>
+                        ${note ? `<span class="text-muted" style="font-size:0.75rem; max-width:55%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${note}">📝 ${note}</span>` : ''}
+                    </div>
+                </div>`;
+              }).join('')
+            : `<div class="text-center text-muted py-3" style="font-size:0.85rem;">ยังไม่มีประวัติเดือนนี้</div>`;
+
+        function periodCard(hours, label, color) {
+            return `<div style="flex:1; background:#f8f9fa; border-radius:12px; padding:12px; text-align:center;">
+                <div style="font-size:0.72rem; color:#888; margin-bottom:4px;">${label}</div>
+                <div style="font-size:1.8rem; font-weight:700; color:${color};">${hours}</div>
+                <div style="font-size:0.72rem; color:#aaa;">ชม.</div>
+            </div>`;
+        }
+
+        Swal.fire({
+            title: `📊 ครู${teacherName}`,
+            width: '92%',
+            html: `
+            <div style="text-align:left;">
+
+                <!-- เดือนนี้ -->
+                <div style="font-size:0.78rem; font-weight:600; color:#ff6600; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                    📅 ${thaiMonthLabel(curMY)} <span style="background:#fff3e0; color:#ff6600; border-radius:10px; padding:2px 8px; font-size:0.7rem;">เดือนนี้</span>
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:4px;">
+                    ${periodCard(cur1, 'รอบ 1 (1–15)', '#007bff')}
+                    ${periodCard(cur2, 'รอบ 2 (16–สิ้นเดือน)', '#28a745')}
+                </div>
+                <div style="text-align:center; font-size:0.8rem; color:#555; margin-bottom:16px;">
+                    รวมเดือนนี้ <strong>${cur1 + cur2} ชม.</strong>
+                </div>
+
+                <!-- เดือนที่แล้ว -->
+                <div style="font-size:0.78rem; font-weight:600; color:#6c757d; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                    📅 ${thaiMonthLabel(prevMY)} <span style="background:#f0f0f0; color:#666; border-radius:10px; padding:2px 8px; font-size:0.7rem;">เดือนที่แล้ว</span>
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:4px;">
+                    ${periodCard(prev1, 'รอบ 1 (1–15)', '#6c8ebf')}
+                    ${periodCard(prev2, 'รอบ 2 (16–สิ้นเดือน)', '#6c9e6e')}
+                </div>
+                <div style="text-align:center; font-size:0.8rem; color:#555; margin-bottom:16px;">
+                    รวมเดือนที่แล้ว <strong>${prev1 + prev2} ชม.</strong>
+                </div>
+
+                <!-- ประวัติล่าสุด -->
+                <div style="font-size:0.78rem; font-weight:600; color:#333; margin-bottom:6px;">🗒️ ประวัติล่าสุด (เดือนนี้)</div>
+                <div style="max-height:220px; overflow-y:auto; border:1px solid #eee; border-radius:10px; padding:8px 10px;">
+                    ${recentHtml}
+                </div>
+            </div>`,
+            confirmButtonText: 'ปิด',
+            confirmButtonColor: '#ff6600',
+            showCancelButton: false
+        });
     }
 
     // ── Boot ────────────────────────────────
