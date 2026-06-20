@@ -179,6 +179,14 @@
             document.getElementById('loginLoading').style.display = 'none';
             document.getElementById('loginBtn').disabled = false;
             document.getElementById('loginPhone').placeholder = 'เบอร์โทรศัพท์';
+
+            // ── restore session ──────────────────────
+            const saved = getSavedSession();
+            if (saved) {
+                currentUser = saved;
+                isAdmin = saved === 'admin';
+                enterApp();
+            }
         } catch (e) {
             console.error(e);
             document.getElementById('loginLoading').textContent = '❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า';
@@ -226,6 +234,7 @@
     }
 
     function enterApp() {
+        saveSession(currentUser);
         const name = isAdmin ? '👑 Admin' : `ครู${teacherNames[currentUser] || currentUser}`;
         document.getElementById('currentUserBadge').textContent = name;
         document.getElementById('userBar').style.display = 'flex';
@@ -235,6 +244,7 @@
     }
 
     function doLogout() {
+        clearSession();
         currentUser = null;
         isAdmin = false;
         dataLoaded = false;
@@ -868,6 +878,30 @@
             confirmButtonColor: '#ff6600',
             showCancelButton: false
         });
+    }
+
+    // ══════════════════════════════════════════
+    // 💾 Session (หมดอายุเที่ยงคืน)
+    // ══════════════════════════════════════════
+    function saveSession(user) {
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0); // เที่ยงคืนคืนนี้
+        localStorage.setItem('ms_user',   user);
+        localStorage.setItem('ms_expiry', midnight.getTime());
+    }
+
+    function getSavedSession() {
+        const user   = localStorage.getItem('ms_user');
+        const expiry = localStorage.getItem('ms_expiry');
+        if (user && expiry && Date.now() < parseInt(expiry)) return user;
+        localStorage.removeItem('ms_user');
+        localStorage.removeItem('ms_expiry');
+        return null;
+    }
+
+    function clearSession() {
+        localStorage.removeItem('ms_user');
+        localStorage.removeItem('ms_expiry');
     }
 
     // ── Boot ────────────────────────────────
