@@ -197,15 +197,15 @@
     // 🔐 Login / Logout
     // ══════════════════════════════════════════
     function doLogin() {
-        const rawPhone = document.getElementById('loginPhone').value.trim();
-        // ตัด 0 นำหน้าออก เผื่อ Sheet เก็บแบบไม่มี 0 (เช่น 625624422 แทน 0625624422)
-        const phone = rawPhone.replace(/[-\s]/g, '').replace(/^0+/, '');
+        const rawPhone = document.getElementById('loginPhone').value.trim().replace(/[-\s]/g, '');
+        // ตัด 0 นำหน้า สำหรับเช็คครู (Sheet อาจไม่มี 0 นำหน้า)
+        const phone = rawPhone.replace(/^0+/, '');
 
-        if (!phone) { showLoginMsg('กรุณากรอกเบอร์โทรศัพท์'); return; }
+        if (!rawPhone) { showLoginMsg('กรุณากรอกเบอร์โทรศัพท์'); return; }
         if (!dataLoaded) { showLoginMsg('ข้อมูลยังโหลดไม่เสร็จ กรุณารอสักครู่...'); return; }
 
-        // ── ตรวจ Admin ──────────────────────────────
-        if (phone === ADMIN_PHONE) {
+        // ── ตรวจ Admin (ใช้ rawPhone — ไม่ตัด 0) ────
+        if (rawPhone === ADMIN_PHONE) {
             currentUser = 'admin';
             isAdmin = true;
             enterApp();
