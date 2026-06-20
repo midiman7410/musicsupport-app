@@ -558,7 +558,9 @@
             const btnHtml = canMark
                 ? `<button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="markAttendance('${code}')">📋 ลงชื่อนักเรียน</button>`
                 : `<button class="btn btn-sm btn-outline-secondary w-100 mt-2" disabled title="ลงชื่อได้เฉพาะนักเรียนของตัวเอง">📋 ลงชื่อนักเรียน</button>`;
-            const profileBtn = `<button class="btn btn-sm btn-outline-primary w-100 mt-1" onclick="showTeacherProfile('${code}','${name}')">📊 ประวัติการสอน</button>`;
+            const profileBtn = (isAdmin || isMyCard)
+                ? `<button class="btn btn-sm btn-outline-primary w-100 mt-1" onclick="showTeacherProfile('${code}','${name}')">📊 ประวัติการสอน</button>`
+                : '';
 
             html += `
                 <div class="${cardClass}">
