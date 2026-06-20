@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.12</title>
+    <title>Music Admin - V 0.1.13</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -43,7 +43,7 @@
     </style>
 </head>
 <body>
-<div class="v-badge">V 0.1.12</div>
+<div class="v-badge">V 0.1.13</div>
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
 
@@ -470,42 +470,55 @@
         }
 
         const today = new Date().toLocaleDateString('th-TH');
-        const checkboxHtml = myStudents.map(s => {
+        const rowHtml = myStudents.map(s => {
             const id = getVal(s, 0);
             const name = getVal(s, 2) || '';
             const remain = getVal(s, 16) || 0;
             const subj = getVal(s, 8) || '';
-            return `<div class="form-check py-2 border-bottom">
-                <input class="form-check-input" type="checkbox" id="att-${id}" value="${id}">
-                <label class="form-check-label w-100" for="att-${id}">
-                    <span class="fw-bold">${name}</span>
-                    <small class="text-muted d-block">${subj} · เหลือ ${remain} ชม.</small>
-                </label>
+            return `<div class="att-row py-2 border-bottom" style="text-align:left;">
+                <div class="fw-bold">${name} <small class="text-muted">${subj} · เหลือ ${remain} ชม.</small></div>
+                <div class="btn-group btn-group-sm mt-1 w-100" role="group">
+                    <input type="radio" class="btn-check" name="att-${id}" id="att-${id}-present" value="present">
+                    <label class="btn btn-outline-success" for="att-${id}-present">✅ เข้าเรียน</label>
+                    <input type="radio" class="btn-check" name="att-${id}" id="att-${id}-leave" value="leave">
+                    <label class="btn btn-outline-warning" for="att-${id}-leave">📋 ลา</label>
+                    <input type="radio" class="btn-check" name="att-${id}" id="att-${id}-absent" value="absent">
+                    <label class="btn btn-outline-danger" for="att-${id}-absent">❌ ขาด</label>
+                </div>
             </div>`;
         }).join('');
 
-        const { value: selectedIds } = await Swal.fire({
+        const { value: result } = await Swal.fire({
             title: `📋 ลงชื่อ — ครู${tName}`,
             html: `
                 <div class="text-muted mb-2" style="font-size:0.85rem;">วันที่: ${today}</div>
-                <div style="text-align:left; max-height:350px; overflow-y:auto; padding: 0 5px;">
-                    ${checkboxHtml}
+                <div style="text-align:left; max-height:380px; overflow-y:auto; padding: 0 5px;">
+                    ${rowHtml}
                 </div>`,
             showCancelButton: true,
-            confirmButtonText: '✅ บันทึกการเข้าเรียน',
+            confirmButtonText: '✅ บันทึก',
             confirmButtonColor: '#28a745',
             cancelButtonText: 'ยกเลิก',
             preConfirm: () => {
-                const checked = [...document.querySelectorAll('[id^="att-"]:checked')].map(el => el.value);
-                if (checked.length === 0) {
-                    Swal.showValidationMessage('กรุณาเลือกนักเรียนอย่างน้อย 1 คน');
+                const records = myStudents.map(s => {
+                    const id = getVal(s, 0);
+                    const checked = document.querySelector(`input[name="att-${id}"]:checked`);
+                    return { studentId: id, status: checked ? checked.value : null };
+                });
+                const filled = records.filter(r => r.status !== null);
+                if (filled.length === 0) {
+                    Swal.showValidationMessage('กรุณาเลือกสถานะนักเรียนอย่างน้อย 1 คน');
                     return false;
                 }
-                return checked;
+                return filled;
             }
         });
 
-        if (!selectedIds) return;
+        if (!result) return;
+
+        const presentCount = result.filter(r => r.status === 'present').length;
+        const leaveCount   = result.filter(r => r.status === 'leave').length;
+        const absentCount  = result.filter(r => r.status === 'absent').length;
 
         // Step 3: ส่งข้อมูลไป API
         Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -516,13 +529,13 @@
                 body: JSON.stringify({
                     action: 'markAttendance',
                     teacherCode,
-                    studentIds: selectedIds,
+                    records: result,
                     date: today
                 })
             });
             setTimeout(async () => {
                 await loadData();
-                Swal.fire('บันทึกแล้ว', `ลงชื่อ ${selectedIds.length} คน เรียบร้อย`, 'success');
+                Swal.fire('บันทึกแล้ว', `✅ เข้าเรียน ${presentCount} · 📋 ลา ${leaveCount} · ❌ ขาด ${absentCount}`, 'success');
             }, 1500);
         } catch (err) {
             Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกได้', 'error');
