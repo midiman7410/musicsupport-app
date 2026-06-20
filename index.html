@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.11</title>
+    <title>Music Admin - V 0.1.12</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -43,7 +43,7 @@
     </style>
 </head>
 <body>
-<div class="v-badge">V 0.1.11</div>
+<div class="v-badge">V 0.1.12</div>
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
 
@@ -71,6 +71,14 @@
         't003': 'ติ่ง',
         't004': 'โรแลน',
         't005': 'แอ๋ม'
+    };
+    // 🔐 รหัสผ่านครูแต่ละคน (ตั้งเป็น 1234 ไว้ก่อน)
+    const teacherPins = {
+        't001': '1234',
+        't002': '1234',
+        't003': '1234',
+        't004': '1234',
+        't005': '1234'
     };
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
 
@@ -380,48 +388,41 @@
         return unique.size;
     }
 
-    // ✅ ฟังก์ชันหลักที่แก้ไข: ดึงข้อมูลครูจากนักเรียนเมื่อ allTeachers ว่าง
     function renderTeacherList(container) {
-        // สร้าง map ครู → รายชื่อนักเรียน
-        const teacherMap = {};
+        // สร้าง list ครู { code, name, students[] }
+        const teacherList = [];
 
         if (allTeachers.length > 0) {
-            // มีข้อมูลครูจาก API ตรงๆ
             allTeachers.forEach(t => {
                 const vals = Object.values(t).map(v => (v || "").toString().trim());
+                const code = vals[0].toLowerCase();
                 const name = vals[2] || vals[1] || vals[0] || "?";
-                const searchKeys = vals.filter(v => v).map(v => v.toLowerCase());
-                const students = allStudents.filter(s => {
-                    const sTeacher = (getVal(s, 19) || "").toString().trim().toLowerCase();
-                    return sTeacher && searchKeys.includes(sTeacher);
-                }).map(s => getVal(s, 2) || "");
-                teacherMap[name] = students;
+                const students = allStudents.filter(s =>
+                    (getVal(s, 19) || "").toString().trim().toLowerCase() === code
+                );
+                teacherList.push({ code, name, students });
             });
         } else {
-            // ไม่มีข้อมูลครูจาก API → สร้างจาก column 19 + map ชื่อจาก teacherNames
-            allStudents.forEach(s => {
-                const tCode = (getVal(s, 19) || "").toString().trim();
-                const tName = teacherNames[tCode.toLowerCase()] || tCode; // แปลงรหัส → ชื่อ
-                const studentName = (getVal(s, 2) || "").toString().trim();
-                if (tCode) {
-                    if (!teacherMap[tName]) teacherMap[tName] = [];
-                    if (studentName) teacherMap[tName].push(studentName);
-                }
+            // fallback จาก column 19 ของนักเรียน
+            const codeSet = [...new Set(allStudents.map(s => (getVal(s, 19) || "").toString().trim().toLowerCase()).filter(v => v))];
+            codeSet.forEach(code => {
+                const name = teacherNames[code] || code;
+                const students = allStudents.filter(s => (getVal(s, 19) || "").toString().trim().toLowerCase() === code);
+                teacherList.push({ code, name, students });
             });
         }
 
-        if (Object.keys(teacherMap).length === 0) {
+        if (teacherList.length === 0) {
             container.innerHTML = `<div class="alert alert-warning text-center m-3">ยังไม่มีข้อมูลครูในระบบ</div>`;
             return;
         }
 
-        // เรียงครูตามจำนวนนักเรียน (มากสุดก่อน)
-        const sorted = Object.entries(teacherMap).sort((a, b) => b[1].length - a[1].length);
+        teacherList.sort((a, b) => b.students.length - a.students.length);
 
         let html = '<div class="teacher-grid">';
-        sorted.forEach(([name, students]) => {
+        teacherList.forEach(({ code, name, students }) => {
             const studentListHtml = students.length > 0
-                ? students.map(n => `👤 ${n}`).join('<br>')
+                ? students.map(s => `👤 ${getVal(s, 2) || ''}`).join('<br>')
                 : '<span class="text-muted">ยังไม่มีนักเรียน</span>';
             html += `
                 <div class="teacher-card">
@@ -429,10 +430,103 @@
                     <div class="teacher-name">ครู${name}</div>
                     <div class="teacher-count">${students.length} คน</div>
                     <div class="teacher-students">${studentListHtml}</div>
+                    <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="markAttendance('${code}')">📋 ลงชื่อนักเรียน</button>
                 </div>`;
         });
         html += '</div>';
         container.innerHTML = html;
+    }
+
+    async function markAttendance(teacherCode) {
+        const tName = teacherNames[teacherCode.toLowerCase()] || teacherCode;
+
+        // Step 1: ยืนยัน PIN ครู
+        const { value: pin } = await Swal.fire({
+            title: `🔐 ครู${tName}`,
+            input: 'password',
+            inputPlaceholder: 'กรอกรหัสผ่านครู',
+            showCancelButton: true,
+            confirmButtonText: 'เข้าสู่ระบบ',
+            confirmButtonColor: '#007bff',
+            cancelButtonText: 'ยกเลิก'
+        });
+
+        if (!pin) return;
+
+        const expectedPin = teacherPins[teacherCode.toLowerCase()] || '1234';
+        if (pin !== expectedPin) {
+            Swal.fire('รหัสผ่านไม่ถูกต้อง', '', 'error');
+            return;
+        }
+
+        // Step 2: แสดงรายชื่อนักเรียนของครูคนนี้
+        const myStudents = allStudents.filter(s =>
+            (getVal(s, 19) || "").toString().trim().toLowerCase() === teacherCode.toLowerCase()
+        );
+
+        if (myStudents.length === 0) {
+            Swal.fire('ไม่พบนักเรียน', 'ไม่มีนักเรียนในมือครูท่านนี้', 'info');
+            return;
+        }
+
+        const today = new Date().toLocaleDateString('th-TH');
+        const checkboxHtml = myStudents.map(s => {
+            const id = getVal(s, 0);
+            const name = getVal(s, 2) || '';
+            const remain = getVal(s, 16) || 0;
+            const subj = getVal(s, 8) || '';
+            return `<div class="form-check py-2 border-bottom">
+                <input class="form-check-input" type="checkbox" id="att-${id}" value="${id}">
+                <label class="form-check-label w-100" for="att-${id}">
+                    <span class="fw-bold">${name}</span>
+                    <small class="text-muted d-block">${subj} · เหลือ ${remain} ชม.</small>
+                </label>
+            </div>`;
+        }).join('');
+
+        const { value: selectedIds } = await Swal.fire({
+            title: `📋 ลงชื่อ — ครู${tName}`,
+            html: `
+                <div class="text-muted mb-2" style="font-size:0.85rem;">วันที่: ${today}</div>
+                <div style="text-align:left; max-height:350px; overflow-y:auto; padding: 0 5px;">
+                    ${checkboxHtml}
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: '✅ บันทึกการเข้าเรียน',
+            confirmButtonColor: '#28a745',
+            cancelButtonText: 'ยกเลิก',
+            preConfirm: () => {
+                const checked = [...document.querySelectorAll('[id^="att-"]:checked')].map(el => el.value);
+                if (checked.length === 0) {
+                    Swal.showValidationMessage('กรุณาเลือกนักเรียนอย่างน้อย 1 คน');
+                    return false;
+                }
+                return checked;
+            }
+        });
+
+        if (!selectedIds) return;
+
+        // Step 3: ส่งข้อมูลไป API
+        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            await fetch(apiUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    action: 'markAttendance',
+                    teacherCode,
+                    studentIds: selectedIds,
+                    date: today
+                })
+            });
+            setTimeout(async () => {
+                await loadData();
+                Swal.fire('บันทึกแล้ว', `ลงชื่อ ${selectedIds.length} คน เรียบร้อย`, 'success');
+            }, 1500);
+        } catch (err) {
+            Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกได้', 'error');
+        }
     }
 
     function handleSearch() {
