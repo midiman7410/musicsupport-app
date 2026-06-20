@@ -190,12 +190,19 @@
     // ══════════════════════════════════════════
     function doLogin() {
         const rawPhone = document.getElementById('loginPhone').value.trim();
-        const phone = rawPhone.replace(/[-\s]/g, '');
+        // ตัด 0 นำหน้าออก เผื่อ Sheet เก็บแบบไม่มี 0 (เช่น 625624422 แทน 0625624422)
+        const phone = rawPhone.replace(/[-\s]/g, '').replace(/^0+/, '');
 
         if (!phone) { showLoginMsg('กรุณากรอกเบอร์โทรศัพท์'); return; }
         if (!dataLoaded) { showLoginMsg('ข้อมูลยังโหลดไม่เสร็จ กรุณารอสักครู่...'); return; }
 
-        showLoginMsg('');
+        // 🔍 DEBUG — ลบทิ้งหลังแก้เสร็จ
+        const debugInfo = allTeachers.map((t,i) => {
+            const vals = Array.isArray(t) ? t : Object.values(t);
+            return `[${i}] col3="${vals[3]}"`;
+        }).join(' | ');
+        showLoginMsg(`👁 ครู ${allTeachers.length} คน | ${debugInfo} | phone="${phone}"`);
+        return;
 
         // ── ตรวจ Admin ──────────────────────────────
         if (phone === ADMIN_PHONE) {
@@ -208,7 +215,7 @@
         // ── ตรวจครู จาก allTeachers ─────────────────
         const found = allTeachers.find(t => {
             const vals = Array.isArray(t) ? t : Object.values(t);
-            const teacherPhone = (vals[PHONE_COL_INDEX] || '').toString().trim().replace(/[-\s]/g, '');
+            const teacherPhone = (vals[PHONE_COL_INDEX] || '').toString().trim().replace(/[-\s]/g, '').replace(/^0+/, '');
             return teacherPhone && teacherPhone === phone;
         });
 
