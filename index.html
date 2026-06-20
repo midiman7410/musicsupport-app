@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.09</title>
+    <title>Music Admin - V 0.1.10</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -14,11 +14,13 @@
         .nav-pills { justify-content: center; background: #fff; border-radius: 50px; padding: 5px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; }
         .nav-link { border-radius: 40px !important; color: #555; font-weight: 600; font-size: 0.85rem; border: none !important; padding: 8px 15px; }
         .nav-link.active { background-color: var(--main-orange) !important; color: white !important; }
+
         .table-responsive { background: white; border-radius: 12px; border: 1px solid #dee2e6; margin: 0 10px; overflow-x: auto; }
         .table-timetable { min-width: 950px; margin-bottom: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
         .th-day { width: 100px; background: #fff5ed !important; color: var(--main-orange); font-weight: bold; text-align: center; vertical-align: middle !important; position: sticky; left: 0; z-index: 2; border: 1px solid #eee; }
         .th-time { background: var(--main-orange) !important; color: white !important; text-align: center; font-size: 0.85rem; padding: 10px !important; border: 1px solid #eee; }
         .class-box { background: #fff; border: 1px solid #ffccaa; border-left: 4px solid var(--main-orange); border-radius: 8px; padding: 6px; margin-bottom: 5px; text-align: left; font-size: 0.75rem; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
+
         .main-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 10px; }
         .std-card { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #eee; position: relative; transition: 0.3s; }
         .std-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -29,6 +31,7 @@
         .update-badge { font-size: 0.65rem; color: #777; background: #f0f0f0; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-top: 8px; }
         .update-badge.active { color: #fff; background: #2ecc71; }
         .subj-badge { font-size: 0.75rem; color: #555; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 5px; padding: 6px; margin-top: 4px; display: inline-block; width: 100%; text-align: left; line-height: 1.5;}
+
         /* Teacher cards */
         .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 10px; }
         .teacher-card { background: white; border-radius: 14px; padding: 15px; text-align: center; border: 1px solid #e3f2fd; border-top: 4px solid var(--teacher-blue); box-shadow: 0 3px 10px rgba(0,0,0,0.06); transition: 0.3s; }
@@ -40,9 +43,10 @@
     </style>
 </head>
 <body>
-<div class="v-badge">V 0.1.09</div>
+<div class="v-badge">V 0.1.10</div>
 <div class="container-fluid p-0">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
+
     <ul class="nav nav-pills">
         <li class="nav-item"><button id="navOverview" class="nav-link" onclick="checkAdminAuth()">ภาพรวม</button></li>
         <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
@@ -52,6 +56,7 @@
     <div id="searchBox" class="px-3 mb-3">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นชื่อนักเรียน..." onkeyup="handleSearch()" style="border-radius: 20px;">
     </div>
+
     <div id="displayArea">
         <div class="text-center p-5">⏳ กำลังโหลดข้อมูล...</div>
     </div>
@@ -59,6 +64,14 @@
 <script>
     const apiUrl = 'https://script.google.com/macros/s/AKfycbz81pmqEYntm0hNg5k4gikuni_8q01t3dg9yfbNQkpuMYr9_CJHuWmN3H9VHrzNxkRS/exec';
     const ADMIN_PIN = "1234";
+    // 🗂️ ตาราง map รหัสครู → ชื่อเล่น (fallback เมื่อ API ไม่ส่ง teachers มา)
+    const teacherNames = {
+        't001': 'เกินท์',
+        't002': 'พารวย',
+        't003': 'ดิ้ง',
+        't004': 'โรแลน',
+        't005': 'แอ้ม'
+    };
     let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
 
     async function loadData() {
@@ -96,14 +109,21 @@
             const leaveQuota = getVal(s, 17);
             const photoData = getVal(s, 18);
             const rawUpdate = getVal(s, 20);
+
             const subj1 = getVal(s, 8) || "";
             const subj2 = getVal(s, 9) || "";
             const time = getVal(s, 10) || "";
+
             let updateText = 'ยังไม่อัปเดต';
             let badgeClass = '';
-            if (rawUpdate && rawUpdate.toString().includes('/')) { updateText = rawUpdate; badgeClass = 'active'; }
+            if (rawUpdate && rawUpdate.toString().includes('/')) {
+                updateText = rawUpdate;
+                badgeClass = 'active';
+            }
+
             const photo = (photoData && (photoData.toString().startsWith('http') || photoData.toString().startsWith('data:image')))
                           ? `<img src="${photoData}">` : '👤';
+
             let subjHtml = '';
             if (subj1 || subj2 || time) {
                 subjHtml = `<div class="subj-badge">`;
@@ -114,6 +134,7 @@
             } else {
                 subjHtml = `<div class="small mt-1" style="color:var(--main-orange); font-weight:bold;">เหลือ ${remain || 0} ชม.</div>`;
             }
+
             html += `<div class="std-card">
                 ${isAdmin ? `<button class="edit-btn-mini" onclick="editStudentBasic('${id}')">✏️</button>` : ''}
                 <div class="std-photo">${photo}</div>
@@ -129,12 +150,14 @@
     async function editStudentBasic(sId) {
         const s = allStudents.find(x => getVal(x, 0) == sId);
         if (!s) return;
+
         const fullName = getVal(s, 1) || "";
         const name = getVal(s, 2) || "";
         const remain = getVal(s, 16) || 0;
         const remain2 = getVal(s, 21) || 0;
         const leaveQuota = getVal(s, 17) || 0;
         const currentPhoto = getVal(s, 18);
+
         const subj1 = getVal(s, 8) || "";
         const subj2 = getVal(s, 9) || "";
         const time = getVal(s, 10) || "";
@@ -144,9 +167,12 @@
                 <div class="text-start" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;">
                     <label class="small fw-bold">ชื่อ-นามสกุล</label>
                     <input id="ed-fullname" class="swal2-input mt-1 mb-2" value="${fullName}" style="width: 90%;">
+
                     <label class="small fw-bold">ชื่อเล่น</label>
                     <input id="ed-name" class="swal2-input mt-1 mb-2" value="${name}" style="width: 90%;">
+
                     <hr class="mt-2 mb-2">
+
                     <div class="row pe-3">
                         <div class="col-8">
                             <label class="small fw-bold text-primary">วิชาเรียน 1</label>
@@ -157,6 +183,7 @@
                             <input id="ed-remain" type="number" class="form-control mt-1" value="${remain}">
                         </div>
                     </div>
+
                     <div class="row mt-2 pe-3">
                         <div class="col-8">
                             <label class="small fw-bold text-success">วิชาเรียน 2</label>
@@ -167,6 +194,7 @@
                             <input id="ed-remain2" type="number" class="form-control mt-1" value="${remain2}">
                         </div>
                     </div>
+
                     <div class="row pe-3 mt-3">
                         <div class="col-8">
                             <label class="small fw-bold text-danger">เวลาเรียน (รวม)</label>
@@ -178,6 +206,7 @@
                         </div>
                     </div>
                     <hr class="mt-3 mb-2">
+
                     <label class="small fw-bold mt-2">อัปโหลดรูปภาพใหม่</label>
                     <input id="ed-photo" type="file" class="form-control mt-1 w-90" accept="image/*">
                     <div id="photo-preview" class="mt-3 text-center">
@@ -222,8 +251,10 @@
                             const img = new Image();
                             img.onload = function() {
                                 const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 300; const MAX_HEIGHT = 300;
-                                let width = img.width; let height = img.height;
+                                const MAX_WIDTH = 300;
+                                const MAX_HEIGHT = 300;
+                                let width = img.width;
+                                let height = img.height;
                                 if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
                                 else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                                 canvas.width = width; canvas.height = height;
@@ -239,21 +270,31 @@
                 });
             }
         });
+
         if (formValues) {
             Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 await fetch(apiUrl, {
-                    method: 'POST', mode: 'no-cors',
+                    method: 'POST',
+                    mode: 'no-cors',
                     body: JSON.stringify({
-                        action: 'editStudentBasic', studentId: sId,
-                        fullName: formValues.fullName, name: formValues.name,
-                        remain: formValues.remain, remain2: formValues.remain2,
-                        leaveQuota: formValues.leaveQuota, subject1: formValues.subject1,
-                        subject2: formValues.subject2, time: formValues.time,
+                        action: 'editStudentBasic',
+                        studentId: sId,
+                        fullName: formValues.fullName,
+                        name: formValues.name,
+                        remain: formValues.remain,
+                        remain2: formValues.remain2,
+                        leaveQuota: formValues.leaveQuota,
+                        subject1: formValues.subject1,
+                        subject2: formValues.subject2,
+                        time: formValues.time,
                         photoBase64: formValues.photoBase64
                     })
                 });
-                setTimeout(async () => { await loadData(); Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success'); }, 2000);
+                setTimeout(async () => {
+                    await loadData();
+                    Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
+                }, 2000);
             } catch (err) { Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error'); }
         }
     }
@@ -275,10 +316,14 @@
                     let teacherName = teacherId || '?';
                     if (teacherId) {
                         const lowerId = teacherId.toLowerCase();
-                        const teacherObj = allTeachers.find(t => Object.values(t).some(v => (v || "").toString().trim().toLowerCase() === lowerId));
+                        const teacherObj = allTeachers.find(t => {
+                            return Object.values(t).some(v => (v || "").toString().trim().toLowerCase() === lowerId);
+                        });
                         if (teacherObj) {
                             const vals = Object.values(teacherObj).map(v => (v || "").toString().trim());
-                            const n2 = vals[2] || ""; const n1 = vals[1] || ""; const n0 = vals[0] || "";
+                            const n2 = vals[2] || "";
+                            const n1 = vals[1] || "";
+                            const n0 = vals[0] || "";
                             if (n2 && n2.toLowerCase() !== lowerId) teacherName = n2;
                             else if (n1 && n1.toLowerCase() !== lowerId) teacherName = n1;
                             else if (n0 && n0.toLowerCase() !== lowerId) teacherName = n0;
@@ -305,18 +350,14 @@
     async function checkAdminAuth() {
         if (isAdmin) { switchPage('overview'); return; }
         const { value: password } = await Swal.fire({
-            title: 'รหัสผ่านแอดมิน', input: 'password',
+            title: 'รหัสผ่านแอดมิน',
+            input: 'password',
             inputPlaceholder: 'กรอก PIN 4 หลัก',
-            showCancelButton: true, confirmButtonColor: '#ff6600'
+            showCancelButton: true,
+            confirmButtonColor: '#ff6600'
         });
         if (password === ADMIN_PIN) { isAdmin = true; switchPage('overview'); }
         else if (password) { Swal.fire('รหัสผ่านไม่ถูกต้อง', '', 'error'); }
-    }
-
-    function getTeacherCount() {
-        if (allTeachers.length > 0) return allTeachers.length;
-        const unique = new Set(allStudents.map(s => (getVal(s, 19) || "").toString().trim()).filter(v => v));
-        return unique.size;
     }
 
     function renderOverview(container) {
@@ -332,10 +373,20 @@
             </div>`;
     }
 
-    // ✅ แก้ไขหลัก: ดึงข้อมูลครูจาก column 19 ของนักเรียนเมื่อ allTeachers ว่าง
+    function getTeacherCount() {
+        if (allTeachers.length > 0) return allTeachers.length;
+        // นับจาก field ครูในข้อมูลนักเรียน
+        const unique = new Set(allStudents.map(s => (getVal(s, 19) || "").toString().trim()).filter(v => v));
+        return unique.size;
+    }
+
+    // ✅ ฟังก์ชันหลักที่แก้ไข: ดึงข้อมูลครูจากนักเรียนเมื่อ allTeachers ว่าง
     function renderTeacherList(container) {
+        // สร้าง map ครู → รายชื่อนักเรียน
         const teacherMap = {};
+
         if (allTeachers.length > 0) {
+            // มีข้อมูลครูจาก API ตรงๆ
             allTeachers.forEach(t => {
                 const vals = Object.values(t).map(v => (v || "").toString().trim());
                 const name = vals[2] || vals[1] || vals[0] || "?";
@@ -347,13 +398,14 @@
                 teacherMap[name] = students;
             });
         } else {
-            // ไม่มีข้อมูลจาก API → สร้างจาก column 19 ของนักเรียน
+            // ไม่มีข้อมูลครูจาก API → สร้างจาก column 19 + map ชื่อจาก teacherNames
             allStudents.forEach(s => {
-                const t = (getVal(s, 19) || "").toString().trim();
+                const tCode = (getVal(s, 19) || "").toString().trim();
+                const tName = teacherNames[tCode.toLowerCase()] || tCode; // แปลงรหัส → ชื่อ
                 const studentName = (getVal(s, 2) || "").toString().trim();
-                if (t) {
-                    if (!teacherMap[t]) teacherMap[t] = [];
-                    if (studentName) teacherMap[t].push(studentName);
+                if (tCode) {
+                    if (!teacherMap[tName]) teacherMap[tName] = [];
+                    if (studentName) teacherMap[tName].push(studentName);
                 }
             });
         }
@@ -363,7 +415,9 @@
             return;
         }
 
+        // เรียงครูตามจำนวนนักเรียน (มากสุดก่อน)
         const sorted = Object.entries(teacherMap).sort((a, b) => b[1].length - a[1].length);
+
         let html = '<div class="teacher-grid">';
         sorted.forEach(([name, students]) => {
             const studentListHtml = students.length > 0
@@ -377,7 +431,8 @@
                     <div class="teacher-students">${studentListHtml}</div>
                 </div>`;
         });
-        container.innerHTML = html + '</div>';
+        html += '</div>';
+        container.innerHTML = html;
     }
 
     function handleSearch() {
