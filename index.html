@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music Admin - V 0.1.18 · 20/06/26</title>
+    <title>Music Admin - V 0.1.19 · 20/06/26</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -36,24 +36,83 @@
         .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 10px; }
         .teacher-card { background: white; border-radius: 14px; padding: 15px; text-align: center; border: 1px solid #e3f2fd; border-top: 4px solid var(--teacher-blue); box-shadow: 0 3px 10px rgba(0,0,0,0.06); transition: 0.3s; }
         .teacher-card:hover { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(0,123,255,0.12); }
+        .teacher-card.my-card { border-top-color: #ff6600; border-color: #ffe0cc; }
         .teacher-avatar { width: 64px; height: 64px; background: #e3f2fd; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
         .teacher-name { font-weight: 700; font-size: 0.95rem; color: #1a1a1a; }
         .teacher-count { display: inline-block; margin-top: 8px; background: #007bff; color: white; border-radius: 20px; padding: 3px 14px; font-size: 0.78rem; font-weight: 600; }
         .teacher-students { margin-top: 8px; font-size: 0.72rem; color: #555; text-align: left; background: #f0f7ff; border-radius: 8px; padding: 6px 8px; line-height: 1.7; }
+
+        /* Login overlay */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #ff6600 0%, #ff9900 100%);
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: white; border-radius: 24px; padding: 32px 24px;
+            max-width: 340px; width: 90%; text-align: center;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+        }
+        .login-logo { font-size: 3.5rem; margin-bottom: 8px; }
+        .login-title { color: var(--main-orange); font-weight: 700; font-size: 1.4rem; margin-bottom: 4px; }
+        .login-sub { color: #888; font-size: 0.83rem; margin-bottom: 24px; }
+        .login-input {
+            border-radius: 14px !important; font-size: 1.1rem !important;
+            text-align: center; letter-spacing: 1px; border: 2px solid #eee !important;
+            padding: 12px !important;
+        }
+        .login-input:focus { border-color: var(--main-orange) !important; box-shadow: 0 0 0 3px rgba(255,102,0,0.15) !important; }
+        .login-btn {
+            background: var(--main-orange); color: white; border: none;
+            border-radius: 14px; font-size: 1rem; padding: 12px; width: 100%;
+            font-weight: 600; margin-top: 12px; transition: 0.2s;
+        }
+        .login-btn:hover { background: #e65c00; }
+        .login-btn:disabled { background: #ccc; }
+        .login-msg { font-size: 0.82rem; margin-top: 10px; min-height: 20px; }
+
+        /* User bar */
+        .user-bar { background: #fff; border-bottom: 1px solid #eee; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .user-name-chip { background: #fff3e0; color: var(--main-orange); border-radius: 20px; padding: 4px 14px; font-size: 0.82rem; font-weight: 600; }
+        .logout-btn { background: none; border: 1px solid #ddd; border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; color: #888; cursor: pointer; }
+        .logout-btn:hover { background: #f8f9fa; color: #333; }
     </style>
 </head>
 <body>
-<div class="v-badge">V 0.1.18 · 20/06/26</div>
-<div class="container-fluid p-0">
+
+<!-- ───── Login Overlay ───── -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <div class="login-logo">🎵</div>
+        <div class="login-title">MUSIC SCHOOL</div>
+        <div class="login-sub">กรอกเบอร์โทรศัพท์เพื่อเข้าสู่ระบบ</div>
+        <input id="loginPhone" type="tel" class="form-control login-input"
+               placeholder="เบอร์โทรศัพท์"
+               onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="login-btn" id="loginBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+        <div id="loginMsg" class="login-msg text-danger"></div>
+        <div id="loginLoading" class="login-msg text-muted" style="display:none;">⏳ กำลังโหลดข้อมูล...</div>
+    </div>
+</div>
+
+<!-- ───── Main App ───── -->
+<div class="v-badge">V 0.1.19 · 20/06/26</div>
+
+<div class="user-bar" id="userBar" style="display:none;">
+    <span class="user-name-chip" id="currentUserBadge">-</span>
+    <button class="logout-btn" onclick="doLogout()">🔒 ออกจากระบบ</button>
+</div>
+
+<div class="container-fluid p-0" id="mainApp" style="display:none;">
     <h3 class="text-center fw-bold mt-3" style="color:var(--main-orange)">🟠 MUSIC SCHOOL</h3>
 
     <ul class="nav nav-pills">
-        <li class="nav-item"><button id="navOverview" class="nav-link" onclick="checkAdminAuth()">ภาพรวม</button></li>
+        <li class="nav-item"><button id="navOverview" class="nav-link" onclick="switchPage('overview')">ภาพรวม</button></li>
         <li class="nav-item"><button id="navStudent" class="nav-link active" onclick="switchPage('student')">นักเรียน</button></li>
         <li class="nav-item"><button id="navTeacher" class="nav-link" onclick="switchPage('teacher')">คุณครู</button></li>
         <li class="nav-item"><button id="navSchedule" class="nav-link" onclick="switchPage('schedule')">ตารางเรียน</button></li>
     </ul>
-    <div id="searchBox" class="px-3 mb-3">
+    <div id="searchBox" class="px-3 mb-3" style="display:none;">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นชื่อนักเรียน..." onkeyup="handleSearch()" style="border-radius: 20px;">
     </div>
 
@@ -61,10 +120,21 @@
         <div class="text-center p-5">⏳ กำลังโหลดข้อมูล...</div>
     </div>
 </div>
+
 <script>
+    // ══════════════════════════════════════════
+    // ⚙️ CONFIGURATION
+    // ══════════════════════════════════════════
     const apiUrl = 'https://script.google.com/macros/s/AKfycbz-zT7e1Xfg9ipIR18nH2bN0WZV3kjDv_Ku1_pqMVa0FbsElEmfg58Iqe-lWEmum99e/exec';
-    const ADMIN_PIN = "1234";
-    // 🗂️ ตาราง map รหัสครู → ชื่อเล่น (fallback เมื่อ API ไม่ส่ง teachers มา)
+
+    // ⚠️ เปลี่ยน PHONE_COL_INDEX ให้ตรงกับ column เบอร์โทรใน Sheet "ข้อมูลคุณครู"
+    // (นับจาก 0: A=0, B=1, C=2, D=3, E=4, ...)
+    const PHONE_COL_INDEX = 3;
+
+    // ⚠️ เบอร์โทรของ Admin (ถ้า Admin ไม่ได้อยู่ใน Sheet ครู)
+    const ADMIN_PHONE = "0000000000";
+
+    // fallback ชื่อครู
     const teacherNames = {
         't001': 'เก๊นท์',
         't002': 'พารวย',
@@ -72,30 +142,108 @@
         't004': 'โรแลน',
         't005': 'แอ๋ม'
     };
-    // 🔐 รหัสผ่านครูแต่ละคน (ตั้งเป็น 1234 ไว้ก่อน)
-    const teacherPins = {
-        't001': '1234',
-        't002': '1234',
-        't003': '1234',
-        't004': '1234',
-        't005': '1234'
-    };
-    let isAdmin = false, allStudents = [], allTeachers = [], currentPage = 'student';
 
+    // ══════════════════════════════════════════
+    // 🗃️ State
+    // ══════════════════════════════════════════
+    let isAdmin = false;
+    let currentUser = null;        // 'admin' | 't001' | 't002' | ...
+    let allStudents = [];
+    let allTeachers = [];
+    let currentPage = 'student';
+    let dataLoaded = false;
+
+    // ══════════════════════════════════════════
+    // 🔄 Load data
+    // ══════════════════════════════════════════
     async function loadData() {
         try {
+            document.getElementById('loginLoading').style.display = 'block';
+            document.getElementById('loginBtn').disabled = true;
             const res = await fetch(`${apiUrl}?t=${new Date().getTime()}`, { method: 'GET', redirect: 'follow' });
             const data = await res.json();
             allStudents = data.students || [];
             allTeachers = data.teachers || [];
-            renderDisplay();
+            dataLoaded = true;
+            document.getElementById('loginLoading').style.display = 'none';
+            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('loginPhone').placeholder = 'เบอร์โทรศัพท์';
         } catch (e) {
             console.error(e);
-            document.getElementById('displayArea').innerHTML = '<div class="text-center p-5">❌ โหลดข้อมูลไม่สำเร็จ</div>';
+            document.getElementById('loginLoading').textContent = '❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า';
         }
     }
 
-    function getVal(obj, index) { return Object.values(obj)[index]; }
+    // ══════════════════════════════════════════
+    // 🔐 Login / Logout
+    // ══════════════════════════════════════════
+    function doLogin() {
+        const rawPhone = document.getElementById('loginPhone').value.trim();
+        const phone = rawPhone.replace(/[-\s]/g, '');
+
+        if (!phone) { showLoginMsg('กรุณากรอกเบอร์โทรศัพท์'); return; }
+        if (!dataLoaded) { showLoginMsg('ข้อมูลยังโหลดไม่เสร็จ กรุณารอสักครู่...'); return; }
+
+        showLoginMsg('');
+
+        // ── ตรวจ Admin ──────────────────────────────
+        if (phone === ADMIN_PHONE) {
+            currentUser = 'admin';
+            isAdmin = true;
+            enterApp();
+            return;
+        }
+
+        // ── ตรวจครู จาก allTeachers ─────────────────
+        const found = allTeachers.find(t => {
+            const vals = Array.isArray(t) ? t : Object.values(t);
+            const teacherPhone = (vals[PHONE_COL_INDEX] || '').toString().trim().replace(/[-\s]/g, '');
+            return teacherPhone && teacherPhone === phone;
+        });
+
+        if (found) {
+            const vals = Array.isArray(found) ? found : Object.values(found);
+            currentUser = (vals[0] || '').toString().trim().toLowerCase(); // e.g. 't001'
+            isAdmin = false;
+            enterApp();
+        } else {
+            showLoginMsg('❌ ไม่พบเบอร์นี้ในระบบ');
+        }
+    }
+
+    function showLoginMsg(msg) {
+        document.getElementById('loginMsg').textContent = msg;
+    }
+
+    function enterApp() {
+        const name = isAdmin ? '👑 Admin' : `ครู${teacherNames[currentUser] || currentUser}`;
+        document.getElementById('currentUserBadge').textContent = name;
+        document.getElementById('userBar').style.display = 'flex';
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        renderDisplay();
+    }
+
+    function doLogout() {
+        currentUser = null;
+        isAdmin = false;
+        dataLoaded = false;
+        allStudents = [];
+        allTeachers = [];
+        document.getElementById('loginPhone').value = '';
+        showLoginMsg('');
+        document.getElementById('loginLoading').style.display = 'none';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('userBar').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'none';
+        // โหลดข้อมูลใหม่
+        loadData();
+    }
+
+    // ══════════════════════════════════════════
+    // 🖥️ Rendering
+    // ══════════════════════════════════════════
+    function getVal(obj, index) { return (Array.isArray(obj) ? obj : Object.values(obj))[index]; }
 
     function renderDisplay() {
         const area = document.getElementById('displayArea');
@@ -110,17 +258,16 @@
         const list = filteredData || allStudents;
         let html = '<div class="main-grid">';
         list.forEach(s => {
-            const id = getVal(s, 0);
-            const name = getVal(s, 2);
-            const remain = getVal(s, 16);
+            const id      = getVal(s, 0);
+            const name    = getVal(s, 2);
+            const remain  = getVal(s, 16);
             const remain2 = getVal(s, 21);
             const leaveQuota = getVal(s, 17);
-            const photoData = getVal(s, 18);
-            const rawUpdate = getVal(s, 20);
-
+            const photoData  = getVal(s, 18);
+            const rawUpdate  = getVal(s, 20);
             const subj1 = getVal(s, 8) || "";
             const subj2 = getVal(s, 9) || "";
-            const time = getVal(s, 10) || "";
+            const time  = getVal(s, 10) || "";
 
             let updateText = 'ยังไม่อัปเดต';
             let badgeClass = '';
@@ -128,16 +275,15 @@
                 updateText = rawUpdate;
                 badgeClass = 'active';
             }
-
             const photo = (photoData && (photoData.toString().startsWith('http') || photoData.toString().startsWith('data:image')))
                           ? `<img src="${photoData}">` : '👤';
 
             let subjHtml = '';
             if (subj1 || subj2 || time) {
                 subjHtml = `<div class="subj-badge">`;
-                if(subj1) subjHtml += `📘 <b>${subj1}</b> (เหลือ ${remain || 0} ชม.)<br>`;
-                if(subj2) subjHtml += `📗 <b>${subj2}</b> (เหลือ ${remain2 || 0} ชม.)<br>`;
-                if(time) subjHtml += `⏰ ${time}`;
+                if (subj1) subjHtml += `📘 <b>${subj1}</b> (เหลือ ${remain || 0} ชม.)<br>`;
+                if (subj2) subjHtml += `📗 <b>${subj2}</b> (เหลือ ${remain2 || 0} ชม.)<br>`;
+                if (time)  subjHtml += `⏰ ${time}`;
                 subjHtml += `</div>`;
             } else {
                 subjHtml = `<div class="small mt-1" style="color:var(--main-orange); font-weight:bold;">เหลือ ${remain || 0} ชม.</div>`;
@@ -165,22 +311,19 @@
         const remain2 = getVal(s, 21) || 0;
         const leaveQuota = getVal(s, 17) || 0;
         const currentPhoto = getVal(s, 18);
-
         const subj1 = getVal(s, 8) || "";
         const subj2 = getVal(s, 9) || "";
-        const time = getVal(s, 10) || "";
+        const time  = getVal(s, 10) || "";
+
         const { value: formValues } = await Swal.fire({
             title: `แก้ไขข้อมูลนักเรียน`,
             html: `
                 <div class="text-start" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;">
                     <label class="small fw-bold">ชื่อ-นามสกุล</label>
                     <input id="ed-fullname" class="swal2-input mt-1 mb-2" value="${fullName}" style="width: 90%;">
-
                     <label class="small fw-bold">ชื่อเล่น</label>
                     <input id="ed-name" class="swal2-input mt-1 mb-2" value="${name}" style="width: 90%;">
-
                     <hr class="mt-2 mb-2">
-
                     <div class="row pe-3">
                         <div class="col-8">
                             <label class="small fw-bold text-primary">วิชาเรียน 1</label>
@@ -191,7 +334,6 @@
                             <input id="ed-remain" type="number" class="form-control mt-1" value="${remain}">
                         </div>
                     </div>
-
                     <div class="row mt-2 pe-3">
                         <div class="col-8">
                             <label class="small fw-bold text-success">วิชาเรียน 2</label>
@@ -202,7 +344,6 @@
                             <input id="ed-remain2" type="number" class="form-control mt-1" value="${remain2}">
                         </div>
                     </div>
-
                     <div class="row pe-3 mt-3">
                         <div class="col-8">
                             <label class="small fw-bold text-danger">เวลาเรียน (รวม)</label>
@@ -214,13 +355,11 @@
                         </div>
                     </div>
                     <hr class="mt-3 mb-2">
-
                     <label class="small fw-bold mt-2">อัปโหลดรูปภาพใหม่</label>
                     <input id="ed-photo" type="file" class="form-control mt-1 w-90" accept="image/*">
                     <div id="photo-preview" class="mt-3 text-center">
                         ${(currentPhoto && (currentPhoto.toString().startsWith('http') || currentPhoto.toString().startsWith('data:image')))
-                            ? `<img src="${currentPhoto}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">`
-                            : ''}
+                            ? `<img src="${currentPhoto}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">` : ''}
                     </div>
                 </div>`,
             showCancelButton: true,
@@ -259,10 +398,8 @@
                             const img = new Image();
                             img.onload = function() {
                                 const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 300;
-                                const MAX_HEIGHT = 300;
-                                let width = img.width;
-                                let height = img.height;
+                                const MAX_WIDTH = 300, MAX_HEIGHT = 300;
+                                let width = img.width, height = img.height;
                                 if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
                                 else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                                 canvas.width = width; canvas.height = height;
@@ -300,7 +437,7 @@
                     })
                 });
                 setTimeout(async () => {
-                    await loadData();
+                    await reloadData();
                     Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
                 }, 2000);
             } catch (err) { Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error'); }
@@ -308,8 +445,8 @@
     }
 
     function renderFullSchedule(container) {
-        const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-        const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+        const times = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+        const days  = ['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','อาทิตย์'];
         let h = '<div class="table-responsive"><table class="table-timetable"><thead><tr><th class="th-day">วัน/เวลา</th>';
         times.forEach(t => h += `<th class="th-time">${t}</th>`);
         h += '</tr></thead><tbody>';
@@ -325,13 +462,13 @@
                     if (teacherId) {
                         const lowerId = teacherId.toLowerCase();
                         const teacherObj = allTeachers.find(t => {
-                            return Object.values(t).some(v => (v || "").toString().trim().toLowerCase() === lowerId);
+                            return (Array.isArray(t) ? t : Object.values(t)).some(v => (v || "").toString().trim().toLowerCase() === lowerId);
                         });
                         if (teacherObj) {
-                            const vals = Object.values(teacherObj).map(v => (v || "").toString().trim());
-                            const n2 = vals[2] || "";
-                            const n1 = vals[1] || "";
-                            const n0 = vals[0] || "";
+                            const vals = Array.isArray(teacherObj) ? teacherObj : Object.values(teacherObj);
+                            const n2 = (vals[2] || "").toString().trim();
+                            const n1 = (vals[1] || "").toString().trim();
+                            const n0 = (vals[0] || "").toString().trim();
                             if (n2 && n2.toLowerCase() !== lowerId) teacherName = n2;
                             else if (n1 && n1.toLowerCase() !== lowerId) teacherName = n1;
                             else if (n0 && n0.toLowerCase() !== lowerId) teacherName = n0;
@@ -350,60 +487,38 @@
         currentPage = p;
         document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
         const nav = document.getElementById(`nav${p.charAt(0).toUpperCase() + p.slice(1)}`);
-        if(nav) nav.classList.add('active');
+        if (nav) nav.classList.add('active');
         document.getElementById('searchBox').style.display = (p === 'student') ? 'block' : 'none';
         renderDisplay();
     }
 
-    async function checkAdminAuth() {
-        if (isAdmin) { switchPage('overview'); return; }
-        const { value: password } = await Swal.fire({
-            title: 'รหัสผ่านแอดมิน',
-            input: 'password',
-            inputPlaceholder: 'กรอก PIN 4 หลัก',
-            showCancelButton: true,
-            confirmButtonColor: '#ff6600'
-        });
-        if (password === ADMIN_PIN) { isAdmin = true; switchPage('overview'); }
-        else if (password) { Swal.fire('รหัสผ่านไม่ถูกต้อง', '', 'error'); }
-    }
-
     function renderOverview(container) {
+        const teacherCount = allTeachers.length > 0 ? allTeachers.length
+            : new Set(allStudents.map(s => (getVal(s, 19) || "").toString().trim()).filter(v => v)).size;
+
         container.innerHTML = `
             <div class="px-3">
                 <div class="row g-3">
                     <div class="col-6"><div class="stat-card">นักเรียน<div class="h2 fw-bold">${allStudents.length}</div></div></div>
-                    <div class="col-6"><div class="stat-card">คุณครู<div class="h2 fw-bold text-primary">${getTeacherCount()}</div></div></div>
-                </div>
-                <div class="mt-4 p-3 bg-white rounded shadow-sm text-center">
-                    <button class="btn btn-sm w-100 btn-outline-secondary" onclick="isAdmin=false; switchPage('student');">🔒 ล็อคระบบแอดมิน</button>
+                    <div class="col-6"><div class="stat-card">คุณครู<div class="h2 fw-bold text-primary">${teacherCount}</div></div></div>
                 </div>
             </div>`;
     }
 
-    function getTeacherCount() {
-        if (allTeachers.length > 0) return allTeachers.length;
-        // นับจาก field ครูในข้อมูลนักเรียน
-        const unique = new Set(allStudents.map(s => (getVal(s, 19) || "").toString().trim()).filter(v => v));
-        return unique.size;
-    }
-
     function renderTeacherList(container) {
-        // สร้าง list ครู { code, name, students[] }
         const teacherList = [];
 
         if (allTeachers.length > 0) {
             allTeachers.forEach(t => {
-                const vals = Object.values(t).map(v => (v || "").toString().trim());
-                const code = vals[0].toLowerCase();
-                const name = vals[2] || vals[1] || vals[0] || "?";
+                const vals = Array.isArray(t) ? t : Object.values(t);
+                const code = (vals[0] || "").toString().trim().toLowerCase();
+                const name = (vals[2] || vals[1] || vals[0] || "?").toString().trim();
                 const students = allStudents.filter(s =>
                     (getVal(s, 19) || "").toString().trim().toLowerCase() === code
                 );
                 teacherList.push({ code, name, students });
             });
         } else {
-            // fallback จาก column 19 ของนักเรียน
             const codeSet = [...new Set(allStudents.map(s => (getVal(s, 19) || "").toString().trim().toLowerCase()).filter(v => v))];
             codeSet.forEach(code => {
                 const name = teacherNames[code] || code;
@@ -421,41 +536,43 @@
 
         let html = '<div class="teacher-grid">';
         teacherList.forEach(({ code, name, students }) => {
+            const isMyCard = (code === currentUser);
+            const canMark  = isAdmin || isMyCard;
+            const cardClass = isMyCard ? 'teacher-card my-card' : 'teacher-card';
+            const myTag = isMyCard ? '<span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">ฉัน</span>' : '';
+
             const studentListHtml = students.length > 0
                 ? students.map(s => `👤 ${getVal(s, 2) || ''}`).join('<br>')
                 : '<span class="text-muted">ยังไม่มีนักเรียน</span>';
+
+            const btnHtml = canMark
+                ? `<button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="markAttendance('${code}')">📋 ลงชื่อนักเรียน</button>`
+                : `<button class="btn btn-sm btn-outline-secondary w-100 mt-2" disabled title="ลงชื่อได้เฉพาะนักเรียนของตัวเอง">📋 ลงชื่อนักเรียน</button>`;
+
             html += `
-                <div class="teacher-card">
+                <div class="${cardClass}">
                     <div class="teacher-avatar">🎸</div>
-                    <div class="teacher-name">ครู${name}</div>
+                    <div class="teacher-name">ครู${name}${myTag}</div>
                     <div class="teacher-count">${students.length} คน</div>
                     <div class="teacher-students">${studentListHtml}</div>
-                    <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="markAttendance('${code}')">📋 ลงชื่อนักเรียน</button>
+                    ${btnHtml}
                 </div>`;
         });
         html += '</div>';
         container.innerHTML = html;
     }
 
+    // ══════════════════════════════════════════
+    // 📋 Mark Attendance (ไม่ต้องกรอก PIN แล้ว)
+    // ══════════════════════════════════════════
     async function markAttendance(teacherCode) {
-        const tName = teacherNames[teacherCode.toLowerCase()] || teacherCode;
-
-        // Step 1: PIN
-        const { value: pin } = await Swal.fire({
-            title: `🔐 ครู${tName}`,
-            input: 'password',
-            inputPlaceholder: 'กรอกรหัสผ่านครู',
-            showCancelButton: true,
-            confirmButtonText: 'เข้าสู่ระบบ',
-            confirmButtonColor: '#007bff',
-            cancelButtonText: 'ยกเลิก'
-        });
-        if (!pin) return;
-        if (pin !== (teacherPins[teacherCode.toLowerCase()] || '1234')) {
-            Swal.fire('รหัสผ่านไม่ถูกต้อง', '', 'error');
+        // ตรวจสิทธิ์
+        if (!isAdmin && currentUser !== teacherCode.toLowerCase()) {
+            Swal.fire('ไม่มีสิทธิ์', 'คุณสามารถลงชื่อได้เฉพาะนักเรียนของคุณเท่านั้น', 'warning');
             return;
         }
 
+        const tName = teacherNames[teacherCode.toLowerCase()] || teacherCode;
         const myStudents = allStudents.filter(s =>
             (getVal(s, 19) || "").toString().trim().toLowerCase() === teacherCode.toLowerCase()
         );
@@ -464,12 +581,12 @@
             return;
         }
 
-        // Step 2: เลือกนักเรียน (+ ค้นหา)
+        // Step 1: เลือกนักเรียน (+ ค้นหา)
         const selHtml = myStudents.map(s => {
-            const id = getVal(s, 0);
-            const name = getVal(s, 2) || '';
+            const id     = getVal(s, 0);
+            const name   = getVal(s, 2) || '';
             const remain = getVal(s, 16) || 0;
-            const subj = getVal(s, 8) || '';
+            const subj   = getVal(s, 8) || '';
             return `<div class="sel-item d-flex align-items-center p-2 mb-1 rounded"
                         data-id="${id}" data-name="${name.toLowerCase()}"
                         onclick="toggleStudentSelect(this)"
@@ -512,15 +629,15 @@
         });
         if (!selectedIds) return;
 
-        // Step 3: ลงชื่อ + บันทึกการสอน
+        // Step 2: ลงชื่อ + บันทึกการสอน
         const chosenStudents = myStudents.filter(s => selectedIds.includes(String(getVal(s, 0))));
         const today = new Date().toLocaleDateString('th-TH');
 
         const attHtml = chosenStudents.map(s => {
-            const id = getVal(s, 0);
-            const name = getVal(s, 2) || '';
+            const id     = getVal(s, 0);
+            const name   = getVal(s, 2) || '';
             const remain = getVal(s, 16) || 0;
-            const subj = getVal(s, 8) || '';
+            const subj   = getVal(s, 8) || '';
             return `<div class="att-row py-2 border-bottom" data-student="${id}">
                 <div class="fw-bold">${name} <small class="text-muted">${subj} · เหลือ ${remain} ชม.</small></div>
                 <div class="d-flex gap-1 mt-1">
@@ -573,11 +690,26 @@
                 body: JSON.stringify({ action: 'markAttendance', teacherCode, records: result, date: today })
             });
             setTimeout(async () => {
-                await loadData();
+                await reloadData();
                 Swal.fire('บันทึกแล้ว', `✅ เข้าเรียน ${presentCount} · 📋 ลา ${leaveCount} · ❌ ขาด ${absentCount}`, 'success');
             }, 1500);
         } catch (err) {
             Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกได้', 'error');
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // 🔁 Reload data (ไม่ logout)
+    // ══════════════════════════════════════════
+    async function reloadData() {
+        try {
+            const res = await fetch(`${apiUrl}?t=${new Date().getTime()}`, { method: 'GET', redirect: 'follow' });
+            const data = await res.json();
+            allStudents = data.students || [];
+            allTeachers = data.teachers || [];
+            renderDisplay();
+        } catch (e) {
+            console.error(e);
         }
     }
 
@@ -600,17 +732,16 @@
     function toggleAttBtn(btn) {
         const group = btn.closest('[data-student]');
         const wasActive = btn.classList.contains('active');
-        // ล้างทุกปุ่มในกลุ่ม
         group.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active'));
-        // ถ้ายังไม่ active → เปิด, ถ้า active อยู่แล้ว → ปิด (toggle off)
         if (!wasActive) btn.classList.add('active');
     }
 
     function handleSearch() {
         const term = document.getElementById('searchInput').value.toLowerCase();
-        renderStudentList(allStudents.filter(s => Object.values(s).join(' ').toLowerCase().includes(term)));
+        renderStudentList(allStudents.filter(s => (Array.isArray(s) ? s : Object.values(s)).join(' ').toLowerCase().includes(term)));
     }
 
+    // ── Boot ────────────────────────────────
     loadData();
 </script>
 </body>
